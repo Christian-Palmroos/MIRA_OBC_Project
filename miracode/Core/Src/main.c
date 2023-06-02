@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stm32l4xx_it.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +49,8 @@ SD_HandleTypeDef hsd1;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim17;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -65,6 +67,8 @@ static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM17_Init(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -86,6 +90,7 @@ int main(void)
 	uint8_t wtext[] = "STM32 FATFS works great!"; /* File write buffer */
 	uint8_t rtext[100];/* File read buffer */
 	uint8_t usberr;
+	FRESULT result;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -114,21 +119,30 @@ int main(void)
   MX_USART2_UART_Init();
   MX_FATFS_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM17_Init();
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-  if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
+
+  /*result = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
+  if(result != FR_OK)
     	{
 	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  	  	  HAL_Delay (300);
+	  	  	  HAL_Delay (1000);
 	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  	  	  HAL_Delay (1000);
     	}
     	else
     	{
-    		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+    		result = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
+
+    		if(result != FR_OK)
     	    {
-				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
-				  HAL_Delay (300);
-				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+
+				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+				  HAL_Delay (1000);
+				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 				  HAL_Delay (1000);
     	    }
     		else
@@ -136,9 +150,9 @@ int main(void)
     			//Open file for writing (Create)
     			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
     			{
-    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
-    		  	  	  HAL_Delay (300);
-    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+    		  	  	  HAL_Delay (1000);
+    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
     		  	  	  HAL_Delay (1000);
     			}
     			else
@@ -152,38 +166,56 @@ int main(void)
     				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
     				if((byteswritten == 0) || (res != FR_OK))
     				{
-    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
-    			  	  	  HAL_Delay (300);
-    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+    			  	  	  HAL_Delay (1000);
+    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
     			  	  	  HAL_Delay (1000);
     				}
     				else
     				{
 
     					f_close(&SDFile);
+    					HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+    					HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+    					HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+    					HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+						  HAL_Delay (1000);
+						  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+						  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+						  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+						  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+						  HAL_Delay (1000);
     				}
 
     			}
     		}
     	}
-    	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+    	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);*/
+
+  HAL_TIM_Base_Start_IT(&htim17);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  tick = 0;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  if (tick == 0) {
+		  tick = 10;
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  }
+
+	  /*HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  HAL_Delay (300);
 	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 	  HAL_Delay (300);
 	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 	  HAL_Delay (300);
 	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-	  HAL_Delay (300);
+	  HAL_Delay (300);*/
 
 
   }
@@ -241,6 +273,17 @@ void SystemClock_Config(void)
   /** Enables the Clock Security System
   */
   HAL_RCC_EnableCSS();
+}
+
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* TIM1_TRG_COM_TIM17_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(TIM1_TRG_COM_TIM17_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM1_TRG_COM_TIM17_IRQn);
 }
 
 /**
@@ -404,6 +447,67 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM17 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM17_Init(void)
+{
+
+  /* USER CODE BEGIN TIM17_Init 0 */
+
+  /* USER CODE END TIM17_Init 0 */
+
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM17_Init 1 */
+
+  /* USER CODE END TIM17_Init 1 */
+  htim17.Instance = TIM17;
+  htim17.Init.Prescaler = 999;
+  htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim17.Init.Period = 11999;
+  htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim17.Init.RepetitionCounter = 0;
+  htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim17) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim17) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_OC_ConfigChannel(&htim17, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim17, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM17_Init 2 */
+
+  /* USER CODE END TIM17_Init 2 */
 
 }
 
