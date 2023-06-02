@@ -81,7 +81,11 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	FRESULT res; /* FatFs function common result code */
+	UINT byteswritten, bytesread; /* File write/read counts */
+	uint8_t wtext[] = "STM32 FATFS works great!"; /* File write buffer */
+	uint8_t rtext[100];/* File read buffer */
+	uint8_t usberr;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -111,7 +115,58 @@ int main(void)
   MX_FATFS_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
+    	{
+	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  	  	  HAL_Delay (300);
+	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  	  	  HAL_Delay (1000);
+    	}
+    	else
+    	{
+    		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+    	    {
+				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+				  HAL_Delay (300);
+				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+				  HAL_Delay (1000);
+    	    }
+    		else
+    		{
+    			//Open file for writing (Create)
+    			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+    			{
+    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+    		  	  	  HAL_Delay (300);
+    		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+    		  	  	  HAL_Delay (1000);
+    			}
+    			else
+    			{
 
+    				//Write to the text file
+    				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+    				f_read(&SDFile, &rtext, 100, &bytesread);
+    				//f_read();
+
+    				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
+    				if((byteswritten == 0) || (res != FR_OK))
+    				{
+    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+    			  	  	  HAL_Delay (300);
+    			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+    			  	  	  HAL_Delay (1000);
+    				}
+    				else
+    				{
+
+    					f_close(&SDFile);
+    				}
+
+    			}
+    		}
+    	}
+    	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,6 +174,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
 	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  HAL_Delay (300);
 	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
@@ -127,7 +184,8 @@ int main(void)
 	  HAL_Delay (300);
 	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	  HAL_Delay (300);
-    /* USER CODE BEGIN 3 */
+
+
   }
   /* USER CODE END 3 */
 }
@@ -158,7 +216,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 30;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV20;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
