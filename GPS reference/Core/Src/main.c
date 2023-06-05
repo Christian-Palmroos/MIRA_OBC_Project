@@ -105,8 +105,29 @@ int main(void)
 	  HAL_UART_Transmit (&hlpuart1, UART1_rxBuffer, sizeof(UART1_rxBuffer), 5000);
 	  HAL_UART_Transmit (&huart2, "a", 1, 5000);
 
+	  //HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  //HAL_Delay (1000);
+
 	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	  HAL_Delay (1000);
+	  HAL_Delay (200);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (200);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (200);
+
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (700);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (700);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (700);
+
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (200);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (200);
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  HAL_Delay (200);
 
     /* USER CODE END WHILE */
 
