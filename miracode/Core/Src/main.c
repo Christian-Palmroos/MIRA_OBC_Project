@@ -206,6 +206,9 @@ int main(void)
 	  if (tick == 0) {
 		  tick = 10;
 		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+		  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	  }
 
 	  /*HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
