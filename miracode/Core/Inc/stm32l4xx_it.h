@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
- extern volatile uint8_t tick;
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
