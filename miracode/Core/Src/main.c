@@ -86,6 +86,12 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	FRESULT res; /* FatFs function common result code */
+	UINT byteswritten, bytesread; /* File write/read counts */
+	char wtext[50] = "STM32 FATFS works great!"; /* File write buffer. This was previously type uint8_t */
+	uint8_t rtext[100];/* File read buffer */
+	uint8_t usberr;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -94,6 +100,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+
+  MX_FATFS_Init();
+
+  // This is where the debug pointer disappears for some reason as of 2023-06-06 16:23
+  MX_USB_DEVICE_Init();
 
   /* USER CODE END Init */
 
@@ -120,13 +131,68 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
+  //
+  if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
+      	{
+  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  HAL_Delay (300);
+  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  HAL_Delay (1000);
+      	}
+  else
+      	{
+      		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+      	    {
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+  				  HAL_Delay (300);
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+  				  HAL_Delay (1000);
+      	    }
+      		else
+      		{
+      			// Open file for writing (Create)
+      			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+      			{
+      		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+      		  	  	  HAL_Delay (300);
+      		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+      		  	  	  HAL_Delay (1000);
+      			}
+      			else
+      			{
+
+      				// Write to the text file
+      				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+      				f_read(&SDFile, &rtext, 100, &bytesread);
+      				//f_read();
+
+      				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
+      				if((byteswritten == 0) || (res != FR_OK))
+      				{
+      			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+      			  	  	  HAL_Delay (300);
+      			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+      			  	  	  HAL_Delay (1000);
+      				}
+      				else
+      				{
+
+      					f_close(&SDFile);
+      				}
+
+      			}
+      		}
+      	}
+      	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+
   /* USER CODE END 2 */
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+
 	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  HAL_Delay (1000);
 	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
@@ -140,6 +206,8 @@ int main(void)
 	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	  HAL_Delay (2000);
+
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -630,6 +698,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  printf("Error_Handler() called");
   while (1)
   {
   }
