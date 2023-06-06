@@ -63,6 +63,10 @@ void Error_Handler(void);
 #define UART_TX_GPIO_Port GPIOC
 #define LED1_Pin GPIO_PIN_5
 #define LED1_GPIO_Port GPIOA
+#define Altimeter_SCL_Pin GPIO_PIN_9
+#define Altimeter_SCL_GPIO_Port GPIOA
+#define Altimeter_SDA_Pin GPIO_PIN_10
+#define Altimeter_SDA_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

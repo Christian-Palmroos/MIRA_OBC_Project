@@ -18,14 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "usart.h"
-#include "spi.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
 #include <stdio.h>
+#include "bmp280.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define OUTPUT_BUF_SIZE 48
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,15 +47,40 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+BMP280_HandleTypedef bmp280;
+I2C_HandleTypeDef *bmp2_port = NULL;
+struct data {
+    uint32_t pressure, humidity;
+    int32_t temperature;
+} bmp_data;
+//uint8_t output[sizeof(bmp_data) * 2 + 1];
+uint8_t output[OUTPUT_BUF_SIZE];
+uint8_t output_ctr = 0;
+
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void hex_byte(uint8_t data, uint8_t p[]) {
+    uint8_t temp;
+
+    temp = data >> 4;
+    temp += '0';
+    if (temp >= (10 + '0')) {
+        temp += ('A' - 10 - '0');
+    }
+    p[0] = temp;
+    temp = data & 0x0F;
+    temp += '0';
+    if (temp >= (10 + '0')) {
+        temp += ('A' - 10 - '0');
+    }
+    p[1] = temp;
+}
 
 /* USER CODE END PFP */
-
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -67,8 +93,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint8_t UART_RX[500];
-  uint8_t SPI_RX[500];
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -90,20 +115,57 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
-  MX_SPI1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_MspInit(&hlpuart1);
-  HAL_SPI_MspInit(&hspi1);
+  HAL_I2C_MspInit(&hi2c1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_UART_Transmit(&hlpuart1, "Hello!\n", 7, 100);
+  HAL_Delay (5000);
+
+  if (HAL_I2C_IsDeviceReady(&hi2c1, BMP280_ADDRESS, 10, 10) == HAL_OK) {
+	  bmp2_port = &hi2c1;
+	  HAL_UART_Transmit(&hlpuart1, "BMP280\n", 7, 100);
+  }
+  else {
+	  HAL_UART_Transmit(&hlpuart1, "ERRINIT\n", 8, 100);
+	  for (int i = 0; i < 20; i++) {
+		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+		  HAL_Delay (100);
+	  }
+  }
+
+  if (bmp2_port) {
+	  bmp280_init_default_params(&bmp280.params);
+	  bmp280.addr = BMP280_I2C_ADDRESS_0;
+	  bmp280.i2c = bmp2_port;
+	  if (!bmp280_init(&bmp280, &bmp280.params)) {
+		  // failure
+	  } else {
+		  //success
+	  }
+  }
+
   while (1)
   {
     HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-    HAL_SPI_Receive(&hspi1, SPI_RX, sizeof(SPI_RX), 5000);
 
-    HAL_UART_Transmit (&hlpuart1, UART_RX, sizeof(UART_RX), 5000);
+    if (bmp2_port) {
+		while (bmp280_is_measuring(&bmp280));
+		bmp280_read_fixed(&bmp280, &bmp_data.temperature, &bmp_data.pressure, &bmp_data.humidity);
+		for (uint32_t i = 0; i < sizeof(bmp_data); i++) {
+			hex_byte(*((uint8_t *) &bmp_data + i), output + i * 2);
+		}
+		output[sizeof(bmp_data)] = '\n';
+		HAL_UART_Transmit(&hlpuart1, output, sizeof(bmp_data) + 1, 100);
+	} else {
+		HAL_UART_Transmit(&hlpuart1, "Error\n", 6, 100);
+		HAL_Delay(1000);
+	}
 
     HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
     HAL_Delay (1000);
@@ -157,8 +219,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPUART1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPUART1|RCC_PERIPHCLK_I2C1;
   PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
