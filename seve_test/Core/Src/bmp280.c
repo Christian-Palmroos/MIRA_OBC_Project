@@ -31,20 +31,40 @@
 /**
  * BMP280 registers
  */
-#define BMP280_REG_TEMP_XLSB   0xFC /* bits: 7-4 */
+/**
+#define BMP280_REG_TEMP_XLSB   0xFC // bits: 7-4
 #define BMP280_REG_TEMP_LSB    0xFB
 #define BMP280_REG_TEMP_MSB    0xFA
 #define BMP280_REG_TEMP        (BMP280_REG_TEMP_MSB)
-#define BMP280_REG_PRESS_XLSB  0xF9 /* bits: 7-4 */
+#define BMP280_REG_PRESS_XLSB  0xF9 // bits: 7-4
 #define BMP280_REG_PRESS_LSB   0xF8
 #define BMP280_REG_PRESS_MSB   0xF7
 #define BMP280_REG_PRESSURE    (BMP280_REG_PRESS_MSB)
-#define BMP280_REG_CONFIG      0xF5 /* bits: 7-5 t_sb; 4-2 filter; 0 spi3w_en */
+#define BMP280_REG_CONFIG      0xF5 // bits: 7-5 t_sb; 4-2 filter; 0 spi3w_en
+#define BMP280_REG_CTRL        0xF4 // bits: 7-5 osrs_t; 4-2 osrs_p; 1-0 mode
+#define BMP280_REG_STATUS      0xF3 // bits: 3 measuring; 0 im_update
+#define BMP280_REG_CTRL_HUM    0xF2 // bits: 2-0 osrs_h;
+#define BMP280_REG_RESET       0xE0
+#define BMP280_REG_ID          0xD0
+#define BMP280_REG_CALIB       0x88
+#define BMP280_REG_HUM_CALIB   0x88
+
+#define BMP280_RESET_VALUE     0xB6
+*/
+#define BMP280_REG_TEMP_XLSB   0x07 // bits: 7-4
+#define BMP280_REG_TEMP_LSB    0x08
+#define BMP280_REG_TEMP_MSB    0x09
+#define BMP280_REG_TEMP        (BMP280_REG_TEMP_MSB)
+#define BMP280_REG_PRESS_XLSB  0x04 // bits: 7-4
+#define BMP280_REG_PRESS_LSB   0x05
+#define BMP280_REG_PRESS_MSB   0x06
+#define BMP280_REG_PRESSURE    (BMP280_REG_PRESS_MSB)
+#define BMP280_REG_CONFIG      0x1F /* bits: 7-5 t_sb; 4-2 filter; 0 spi3w_en */
 #define BMP280_REG_CTRL        0xF4 /* bits: 7-5 osrs_t; 4-2 osrs_p; 1-0 mode */
 #define BMP280_REG_STATUS      0xF3 /* bits: 3 measuring; 0 im_update */
 #define BMP280_REG_CTRL_HUM    0xF2 /* bits: 2-0 osrs_h; */
 #define BMP280_REG_RESET       0xE0
-#define BMP280_REG_ID          0xD0
+#define BMP280_REG_ID          0x50
 #define BMP280_REG_CALIB       0x88
 #define BMP280_REG_HUM_CALIB   0x88
 

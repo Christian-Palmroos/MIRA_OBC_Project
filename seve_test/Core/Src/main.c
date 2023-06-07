@@ -141,12 +141,16 @@ int main(void)
 
   if (bmp2_port) {
 	  bmp280_init_default_params(&bmp280.params);
-	  bmp280.addr = BMP280_I2C_ADDRESS_0;
+	  bmp280.addr = BMP280_I2C_ADDRESS_1;
 	  bmp280.i2c = bmp2_port;
 	  if (!bmp280_init(&bmp280, &bmp280.params)) {
 		  // failure
+		  HAL_UART_Transmit(&hlpuart1, "FAILED\n", 7, 100);
+
 	  } else {
 		  //success
+		  HAL_UART_Transmit(&hlpuart1, "INIT OK\n", 8, 100);
+
 	  }
   }
 

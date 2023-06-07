@@ -25,6 +25,7 @@
 
 #define BMP280_CHIP_ID  0x58 /* BMP280 has chip-id 0x58 */
 #define BME280_CHIP_ID  0x60 /* BME280 has chip-id 0x60 */
+#define BMP388_CHIP_ID  0x50 /* BME280 has chip-id 0x60 */
 
 /**
  * Mode of BMP280 module operation.
