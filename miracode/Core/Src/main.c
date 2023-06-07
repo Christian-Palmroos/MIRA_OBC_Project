@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,6 +92,14 @@ int main(void)
 	uint8_t rtext[100];/* File read buffer */
 	uint8_t usberr;
 
+	// For GPS Module
+	HAL_StatusTypeDef UART2_Rx_STATUS;
+	uint8_t UART2_RxBuffer[500];
+	uint8_t *data = "Hello!\n\O";
+
+	// For USB Transmission
+	uint8_t USB_Tx_STATUS;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -101,10 +109,8 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  // SD reader
   MX_FATFS_Init();
-
-  // This is where the debug pointer disappears for some reason as of 2023-06-06 16:23
-  MX_USB_DEVICE_Init();
 
   /* USER CODE END Init */
 
@@ -131,7 +137,12 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-  //
+  HAL_UART_MspInit(&huart1);
+  HAL_UART_MspInit(&huart2);
+
+  //USB_ok = CDC_Init_FS();
+
+  // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
   	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
@@ -139,46 +150,48 @@ int main(void)
   	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
   	  	  	  HAL_Delay (1000);
       	}
+  // here f_mount == FR_OK -> mounting was a success
   else
       	{
-      		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+	  // f_mkfs
+	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
       	    {
   				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
   				  HAL_Delay (300);
   				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
   				  HAL_Delay (1000);
       	    }
-      		else
+	  else
       		{
-      			// Open file for writing (Create)
-      			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
-      			{
-      		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
-      		  	  	  HAL_Delay (300);
-      		  	  	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
-      		  	  	  HAL_Delay (1000);
-      			}
-      			else
-      			{
+			// Open file for writing (Create)
+			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+				{
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+				  HAL_Delay (300);
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+				  HAL_Delay (1000);
+				}
+			else
+				{
 
-      				// Write to the text file
-      				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
-      				f_read(&SDFile, &rtext, 100, &bytesread);
-      				//f_read();
+				// Write to the text file
+				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+				f_read(&SDFile, &rtext, 100, &bytesread);
+				//f_read();
 
-      				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
-      				if((byteswritten == 0) || (res != FR_OK))
-      				{
-      			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
-      			  	  	  HAL_Delay (300);
-      			  	  	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
-      			  	  	  HAL_Delay (1000);
-      				}
-      				else
-      				{
+				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
+				if((byteswritten == 0) || (res != FR_OK))
+					{
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+					  HAL_Delay (300);
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+					  HAL_Delay (1000);
+					}
+				else
+					{
 
-      					f_close(&SDFile);
-      				}
+					f_close(&SDFile);
+					}
 
       			}
       		}
@@ -187,25 +200,79 @@ int main(void)
 
   /* USER CODE END 2 */
 
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 
+	  // This returns HAL_TIMEOUT ???
+	  UART2_Rx_STATUS = HAL_UART_Receive (&huart2, &UART2_RxBuffer, sizeof(UART2_RxBuffer), 5000);
+
+	  // Transmit should be handled through the USB port
+	  if(UART2_Rx_STATUS == HAL_OK)
+	  	  {
+		  // HAL_UART_Transmit (&huart1, UART2_rxBuffer, sizeof(UART2_rxBuffer), 5000);
+		  // HAL_UART_Transmit (&huart1, "b \n", 3, 5000);
+		  CDC_Transmit_FS (UART2_RxBuffer, sizeof(UART2_RxBuffer));
+		  CDC_Transmit_FS ("b \n", 3);
+
+		  // Flash LED1 twice
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+		  HAL_Delay (200);
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+		  HAL_Delay (100);
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+		  HAL_Delay (200);
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  	  }
+	  else
+	  	  {
+
+		  // Flash LED4 twice
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  HAL_Delay (200);
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  HAL_Delay (100);
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  HAL_Delay (200);
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
+		  USB_Tx_STATUS = CDC_Transmit_FS (*data, sizeof(*data));
+
+		  if (USB_Tx_STATUS == USBD_OK)
+		  {
+			  // Flash LED2 twice
+			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+			  HAL_Delay (200);
+			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+			  HAL_Delay (100);
+			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+			  HAL_Delay (200);
+			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+		  }
+		  else
+		  {
+			  // Flash LED3 twice
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  HAL_Delay (200);
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  HAL_Delay (100);
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  HAL_Delay (200);
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		  }
+
+	  	  }
+
+
+	  // Just periodically blinking LED1
+	  /*
 	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  HAL_Delay (1000);
-	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	  HAL_Delay (1000);
-	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-	  HAL_Delay (1000);
-	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-	  HAL_Delay (1000);
+	  HAL_Delay (200);
 	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-	  HAL_Delay (2000);
+	  HAL_Delay (100);
+	  */
+
 
     /* USER CODE END WHILE */
 
@@ -519,7 +586,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 115000;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -567,7 +634,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
