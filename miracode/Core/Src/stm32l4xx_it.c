@@ -41,6 +41,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+uint8_t rchar;
+uint8_t rxBuffer1[RXBUFSIZE];
+uint8_t rxBuffer2[RXBUFSIZE];
+volatile uint8_t *rxBuffer;
+volatile uint8_t rxBufferPos;
+volatile unsigned data_ready;
 
 /* USER CODE END PV */
 
@@ -57,6 +63,7 @@
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim17;
+extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -212,6 +219,34 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
 
   /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART2 global interrupt.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+    char c = huart2.Instance->RDR;
+    if (rxBufferPos < RXBUFSIZE - 1) { rxBuffer[rxBufferPos++] = (uint8_t) c; }
+
+    if ((c == '\r') || (c == '\n')) {
+        rxBuffer[rxBufferPos] = 0;
+        if (rxBufferPos > 1) {
+            data_ready |= 1;
+        }
+        rxBufferPos = 0;
+        if (rxBuffer == rxBuffer1) {rxBuffer = rxBuffer2;}
+        else {rxBuffer = rxBuffer1;}
+  	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+    }
+	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  //rchar = huart2.Instance->RDR;
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+  //ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
+  /* USER CODE END USART2_IRQn 1 */
 }
 
 /**

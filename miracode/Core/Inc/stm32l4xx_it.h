@@ -37,7 +37,15 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+#define RXBUFSIZE 120
+extern uint8_t rxBuffer1[RXBUFSIZE];
+extern uint8_t rxBuffer2[RXBUFSIZE];
 
+extern volatile uint8_t *rxBuffer;
+extern volatile uint8_t rxBufferPos;
+extern volatile uint8_t tick;
+extern volatile uint8_t step;
+extern volatile unsigned data_ready;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -56,6 +64,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 void TIM1_TRG_COM_TIM17_IRQHandler(void);
+void USART2_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

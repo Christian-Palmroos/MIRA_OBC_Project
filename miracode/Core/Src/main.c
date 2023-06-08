@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
+#include "stm32l4xx_it.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,17 +89,24 @@ int main(void)
 
 	FRESULT res; /* FatFs function common result code */
 	UINT byteswritten, bytesread; /* File write/read counts */
-	char wtext[50] = "STM32 FATFS works great!"; /* File write buffer. This was previously type uint8_t */
+	uint8_t wtext[50] = "STM32 FATFS works great!"; /* File write buffer. */
 	uint8_t rtext[100];/* File read buffer */
 	uint8_t usberr;
 
 	// For GPS Module
 	HAL_StatusTypeDef UART2_Rx_STATUS;
-	uint8_t UART2_RxBuffer[500];
-	uint8_t *data = "Hello!\n\O";
+	uint8_t UART2_RxBuffer[272];
 
 	// For USB Transmission
+	USBD_HandleTypeDef hUsbDeviceFS;
 	uint8_t USB_Tx_STATUS;
+	uint8_t *data = "Hello!\n";
+
+	uint8_t USB_TxBuffer_FS;
+
+	uint32_t USB_TxBuffer_Length = 1000;
+
+	uint8_t USBD_TxBuffer_Status;
 
   /* USER CODE END 1 */
 
@@ -111,6 +119,12 @@ int main(void)
 
   // SD reader
   MX_FATFS_Init();
+
+  HAL_UART_MspInit(&huart1);
+  HAL_UART_MspInit(&huart2);
+
+  // This returned 0'\0', even though it's supposed to return either USBD_OK or USBD_FAIL
+//   USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer(&hUsbDeviceFS, USB_TxBuffer_FS, USB_TxBuffer_Length);
 
   /* USER CODE END Init */
 
@@ -137,11 +151,13 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_MspInit(&huart1);
-  HAL_UART_MspInit(&huart2);
+  // Setting the buffer for UART2 data reading
+  rxBuffer = rxBuffer1;
+  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
+  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
+  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
-  //USB_ok = CDC_Init_FS();
-
+  /*
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
@@ -198,6 +214,8 @@ int main(void)
       	}
       	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 
+   */
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -205,15 +223,48 @@ int main(void)
   while (1)
   {
 
+	  // Check here if data is ready
+	  if (1)
+	  {
+		  if (rxBuffer == rxBuffer1)
+		  {
+			  // Saving the transmit status for debugging
+			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, sizeof(rxBuffer));
+
+			  // Switch buffer
+			  rxBuffer = rxBuffer2;
+		  }
+		  else
+		  {
+			  // Saving the transmit status for debugging
+			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, sizeof(rxBuffer));
+
+			  // Switch buffer
+			  rxBuffer = rxBuffer1;
+		  }
+
+
+	  }
+	  else
+	  {
+		  // Flash LED4
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  HAL_Delay (200);
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+	  }
+
+
 	  // This returns HAL_TIMEOUT ???
-	  UART2_Rx_STATUS = HAL_UART_Receive (&huart2, &UART2_RxBuffer, sizeof(UART2_RxBuffer), 5000);
+	  // UART2_Rx_STATUS = HAL_UART_Receive (&huart2, UART2_RxBuffer, sizeof(UART2_RxBuffer), 5000);
+	  // UART2_Rx_STATUS = HAL_BUSY;
 
 	  // Transmit should be handled through the USB port
+	  /*
 	  if(UART2_Rx_STATUS == HAL_OK)
 	  	  {
 		  // HAL_UART_Transmit (&huart1, UART2_rxBuffer, sizeof(UART2_rxBuffer), 5000);
 		  // HAL_UART_Transmit (&huart1, "b \n", 3, 5000);
-		  CDC_Transmit_FS (UART2_RxBuffer, sizeof(UART2_RxBuffer));
+
 		  CDC_Transmit_FS ("b \n", 3);
 
 		  // Flash LED1 twice
@@ -236,43 +287,8 @@ int main(void)
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		  HAL_Delay (200);
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-
-		  USB_Tx_STATUS = CDC_Transmit_FS (*data, sizeof(*data));
-
-		  if (USB_Tx_STATUS == USBD_OK)
-		  {
-			  // Flash LED2 twice
-			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-			  HAL_Delay (200);
-			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-			  HAL_Delay (100);
-			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-			  HAL_Delay (200);
-			  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 		  }
-		  else
-		  {
-			  // Flash LED3 twice
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  HAL_Delay (200);
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  HAL_Delay (100);
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  HAL_Delay (200);
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-		  }
-
-	  	  }
-
-
-	  // Just periodically blinking LED1
-	  /*
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  HAL_Delay (200);
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  HAL_Delay (100);
-	  */
-
+		*/
 
     /* USER CODE END WHILE */
 
@@ -343,6 +359,9 @@ static void MX_NVIC_Init(void)
   /* TIM1_TRG_COM_TIM17_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(TIM1_TRG_COM_TIM17_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM1_TRG_COM_TIM17_IRQn);
+  /* USART2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 /**
