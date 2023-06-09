@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,7 +27,9 @@
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
 #include <stdio.h>
-#include "bmp280.h"
+#include "bmp3.h"
+#include "bmp390_task.h"
+#include "common_porting.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define OUTPUT_BUF_SIZE 48
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,40 +50,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-BMP280_HandleTypedef bmp280;
-I2C_HandleTypeDef *bmp2_port = NULL;
-struct data {
-    uint32_t pressure, humidity;
-    int32_t temperature;
-} bmp_data;
-//uint8_t output[sizeof(bmp_data) * 2 + 1];
-uint8_t output[OUTPUT_BUF_SIZE];
-uint8_t output_ctr = 0;
-
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-void hex_byte(uint8_t data, uint8_t p[]) {
-    uint8_t temp;
 
-    temp = data >> 4;
-    temp += '0';
-    if (temp >= (10 + '0')) {
-        temp += ('A' - 10 - '0');
-    }
-    p[0] = temp;
-    temp = data & 0x0F;
-    temp += '0';
-    if (temp >= (10 + '0')) {
-        temp += ('A' - 10 - '0');
-    }
-    p[1] = temp;
-}
 
 /* USER CODE END PFP */
+
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
@@ -93,6 +73,40 @@ void hex_byte(uint8_t data, uint8_t p[]) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	int8_t rslt;
+	uint16_t settings_sel;
+	struct bmp3_dev dev;
+	struct bmp3_data data = { 0 };
+	struct bmp3_settings settings = { 0 };
+	struct bmp3_status status = { { 0 } };
+
+	/* Interface reference is given as a parameter
+	 *         For I2C : BMP3_I2C_INTF
+	 *         For SPI : BMP3_SPI_INTF
+	 */
+	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
+	bmp3_check_rslt("bmp3_interface_init", rslt);
+
+	rslt = bmp3_init(&dev);
+	bmp3_check_rslt("bmp3_init", rslt);
+
+	settings.int_settings.drdy_en = BMP3_ENABLE;
+	settings.press_en = BMP3_ENABLE;
+	settings.temp_en = BMP3_ENABLE;
+
+	settings.odr_filter.press_os = BMP3_OVERSAMPLING_2X;
+	settings.odr_filter.temp_os = BMP3_OVERSAMPLING_2X;
+	settings.odr_filter.odr = BMP3_ODR_100_HZ;
+
+	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
+				   BMP3_SEL_DRDY_EN;
+
+	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
+	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
+
+	settings.op_mode = BMP3_MODE_NORMAL;
+	rslt = bmp3_set_op_mode(&settings, &dev);
+	bmp3_check_rslt("bmp3_set_op_mode", rslt);
 
   /* USER CODE END 1 */
 
@@ -122,53 +136,46 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_UART_Transmit(&hlpuart1, "Hello!\n", 7, 100);
   HAL_Delay (5000);
 
-  if (HAL_I2C_IsDeviceReady(&hi2c1, BMP280_ADDRESS, 10, 10) == HAL_OK) {
-	  bmp2_port = &hi2c1;
-	  HAL_UART_Transmit(&hlpuart1, "BMP280\n", 7, 100);
-  }
-  else {
-	  HAL_UART_Transmit(&hlpuart1, "ERRINIT\n", 8, 100);
-	  for (int i = 0; i < 20; i++) {
-		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-		  HAL_Delay (100);
-	  }
-  }
-
-  if (bmp2_port) {
-	  bmp280_init_default_params(&bmp280.params);
-	  bmp280.addr = BMP280_I2C_ADDRESS_1;
-	  bmp280.i2c = bmp2_port;
-	  if (!bmp280_init(&bmp280, &bmp280.params)) {
-		  // failure
-		  HAL_UART_Transmit(&hlpuart1, "FAILED\n", 7, 100);
-
-	  } else {
-		  //success
-		  HAL_UART_Transmit(&hlpuart1, "INIT OK\n", 8, 100);
-
-	  }
-  }
 
   while (1)
   {
     HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
-    if (bmp2_port) {
-		while (bmp280_is_measuring(&bmp280));
-		bmp280_read_fixed(&bmp280, &bmp_data.temperature, &bmp_data.pressure, &bmp_data.humidity);
-		for (uint32_t i = 0; i < sizeof(bmp_data); i++) {
-			hex_byte(*((uint8_t *) &bmp_data + i), output + i * 2);
-		}
-		output[sizeof(bmp_data)] = '\n';
-		HAL_UART_Transmit(&hlpuart1, output, sizeof(bmp_data) + 1, 100);
-	} else {
-		HAL_UART_Transmit(&hlpuart1, "Error\n", 6, 100);
-		HAL_Delay(1000);
+    rslt = bmp3_get_status(&status, &dev);
+	bmp3_check_rslt("bmp3_get_status", rslt);
+
+	/* Read temperature and pressure data iteratively based on data ready interrupt */
+	if ((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE))
+	{
+		/*
+		 * First parameter indicates the type of data to be read
+		 * BMP3_PRESS_TEMP : To read pressure and temperature data
+		 * BMP3_TEMP       : To read only temperature data
+		 * BMP3_PRESS      : To read only pressure data
+		 */
+		rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &data, &dev);
+		bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+
+		/* NOTE : Read status register again to clear data ready interrupt status */
+		rslt = bmp3_get_status(&status, &dev);
+		bmp3_check_rslt("bmp3_get_status", rslt);
+
+		//#ifdef BMP3_FLOAT_COMPENSATION
+		HAL_UART_Transmit(&hlpuart1, "Data:\n", 6, 100);
+		HAL_UART_Transmit(&hlpuart1, &data.temperature, sizeof(data.temperature), 1000);
+		HAL_UART_Transmit(&hlpuart1, &data.pressure,  sizeof(data.pressure), 1000);
 	}
 
     HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
