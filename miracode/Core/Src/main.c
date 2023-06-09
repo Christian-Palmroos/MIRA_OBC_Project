@@ -25,6 +25,8 @@
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
 #include "stm32l4xx_it.h"
+
+#include "usbd_cdc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -151,6 +153,8 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
+  volatile unsigned tmp;
+
   // Setting the buffer for UART2 data reading
   rxBuffer = rxBuffer1;
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
@@ -223,34 +227,35 @@ int main(void)
   while (1)
   {
 
+	  tmp = data_ready;
+
 	  // Check here if data is ready
 	  if (1)
 	  {
+
 		  if (rxBuffer == rxBuffer1)
 		  {
-			  // Saving the transmit status for debugging
-			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, sizeof(rxBuffer));
+			  USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
 
-			  // Switch buffer
-			  rxBuffer = rxBuffer2;
+			  // Saving the transmit status for debugging
+			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, 120);
+
 		  }
 		  else
 		  {
 			  // Saving the transmit status for debugging
-			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, sizeof(rxBuffer));
+			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, 120);
 
-			  // Switch buffer
-			  rxBuffer = rxBuffer1;
 		  }
 
-
+		  data_ready = 0;
 	  }
 	  else
 	  {
 		  // Flash LED4
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  HAL_Delay (1000);
+		  //HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	  }
 
 
