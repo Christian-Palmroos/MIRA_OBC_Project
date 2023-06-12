@@ -122,8 +122,8 @@ int main(void)
   // SD reader
   MX_FATFS_Init();
 
-  HAL_UART_MspInit(&huart1);
-  HAL_UART_MspInit(&huart2);
+  //HAL_UART_MspInit(&huart1);
+  //HAL_UART_MspInit(&huart2);
 
   // This returned 0'\0', even though it's supposed to return either USBD_OK or USBD_FAIL
 //   USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer(&hUsbDeviceFS, USB_TxBuffer_FS, USB_TxBuffer_Length);
@@ -161,7 +161,7 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
-  /*
+
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
@@ -176,9 +176,9 @@ int main(void)
 	  // f_mkfs
 	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
       	    {
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (300);
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED0_Pin);
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (1000);
       	    }
 	  else
@@ -186,9 +186,9 @@ int main(void)
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				  HAL_Delay (300);
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED0_Pin);
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				  HAL_Delay (1000);
 				}
 			else
@@ -202,9 +202,9 @@ int main(void)
 				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
 				if((byteswritten == 0) || (res != FR_OK))
 					{
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					  HAL_Delay (300);
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED0_Pin);
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					  HAL_Delay (1000);
 					}
 				else
@@ -218,7 +218,7 @@ int main(void)
       	}
       	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 
-   */
+
 
   /* USER CODE END 2 */
 
@@ -227,24 +227,26 @@ int main(void)
   while (1)
   {
 
-	  tmp = data_ready;
+	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
 
 	  // Check here if data is ready
-	  if (1)
+	  if (data_ready)
 	  {
 
 		  if (rxBuffer == rxBuffer1)
 		  {
-			  USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
+			  // USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
 
 			  // Saving the transmit status for debugging
-			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, 120);
+			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
+			  CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
 
 		  }
 		  else
 		  {
 			  // Saving the transmit status for debugging
-			  USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, 120);
+			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
+			  CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
 
 		  }
 
@@ -254,8 +256,6 @@ int main(void)
 	  {
 		  // Flash LED4
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (1000);
-		  //HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	  }
 
 
