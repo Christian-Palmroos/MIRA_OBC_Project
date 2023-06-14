@@ -7,9 +7,9 @@
 
 #define I2C_HANDLE	(hi2c1)
 #define SPI_HANDLE	(hspi1)
-#define UART_HANDLE	(hlpuart1)
+#define UART_HANDLE	(huart2)
 
-#define BUS_TIMEOUT             5000
+#define BUS_TIMEOUT             1000
 
 void Enable_MCU_INT1_Pin(void);
 void Disable_MCU_INT1_Pin(void);

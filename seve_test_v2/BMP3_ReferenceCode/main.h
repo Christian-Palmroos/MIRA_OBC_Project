@@ -7,12 +7,13 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -27,11 +28,13 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32l0xx_hal.h"
+#include "stm32f4xx_hal.h"
+#include "user_define.h"
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "user_define.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -57,17 +60,23 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define UART_RX_Pin GPIO_PIN_0
-#define UART_RX_GPIO_Port GPIOC
-#define UART_TX_Pin GPIO_PIN_1
-#define UART_TX_GPIO_Port GPIOC
-#define LED1_Pin GPIO_PIN_5
-#define LED1_GPIO_Port GPIOA
-#define Altimeter_SCL_Pin GPIO_PIN_9
-#define Altimeter_SCL_GPIO_Port GPIOA
-#define Altimeter_SDA_Pin GPIO_PIN_10
-#define Altimeter_SDA_GPIO_Port GPIOA
-
+#define SPI_SCK_Pin GPIO_PIN_5
+#define SPI_SCK_GPIO_Port GPIOA
+#define SPI_MISO_Pin GPIO_PIN_6
+#define SPI_MISO_GPIO_Port GPIOA
+#define SPI_MOSI_Pin GPIO_PIN_7
+#define SPI_MOSI_GPIO_Port GPIOA
+#define INT1_Pin GPIO_PIN_10
+#define INT1_GPIO_Port GPIOA
+#define INT1_EXTI_IRQn EXTI15_10_IRQn
+#define INT2_Pin GPIO_PIN_3
+#define INT2_GPIO_Port GPIOB
+#define INT2_EXTI_IRQn EXTI3_IRQn
+#define DRDY_BMM150_Pin GPIO_PIN_5
+#define DRDY_BMM150_GPIO_Port GPIOB
+#define DRDY_BMM150_EXTI_IRQn EXTI9_5_IRQn
+#define SPI_CS_Pin GPIO_PIN_6
+#define SPI_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -77,3 +86,5 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

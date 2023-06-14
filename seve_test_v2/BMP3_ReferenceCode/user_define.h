@@ -5,8 +5,8 @@
 
 #define USE_BOSCH_SENSOR_API
 
-#define USE_I2C_INTERFACE
-//#define USE_SPI_INTERFACE
+//#define USE_I2C_INTERFACE
+#define USE_SPI_INTERFACE
 
 #define USE_BMP390
 

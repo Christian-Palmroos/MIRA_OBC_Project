@@ -34,7 +34,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+extern volatile uint8_t int1_flag;
+extern volatile uint8_t int2_flag;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -90,12 +91,12 @@ int main(void)
 	rslt = bmp3_init(&dev);
 	bmp3_check_rslt("bmp3_init", rslt);
 
-	settings.int_settings.drdy_en = BMP3_ENABLE;
+	settings.int_settings.drdy_en = BMP3_DISABLE;
 	settings.press_en = BMP3_ENABLE;
 	settings.temp_en = BMP3_ENABLE;
 
-	settings.odr_filter.press_os = BMP3_OVERSAMPLING_2X;
-	settings.odr_filter.temp_os = BMP3_OVERSAMPLING_2X;
+	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
+	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
 	settings.odr_filter.odr = BMP3_ODR_100_HZ;
 
 	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
@@ -108,83 +109,95 @@ int main(void)
 	rslt = bmp3_set_op_mode(&settings, &dev);
 	bmp3_check_rslt("bmp3_set_op_mode", rslt);
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE END SysInit */
 
-  /* USER CODE END SysInit */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_LPUART1_UART_Init();
+	MX_I2C1_Init();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_LPUART1_UART_Init();
-  MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
-  HAL_UART_MspInit(&hlpuart1);
-  HAL_I2C_MspInit(&hi2c1);
+	/* USER CODE BEGIN 2 */
+	HAL_UART_MspInit(&hlpuart1);
+	//HAL_I2C_MspInit(&hi2c1);
 
-  /* USER CODE END 2 */
+	/* USER CODE END 2 */
 
-  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
+	/* Call init function for freertos objects (in freertos.c) */
+	MX_FREERTOS_Init();
 
-  /* Start scheduler */
-  osKernelStart();
-  /* We should never get here as control is now taken by the scheduler */
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  HAL_UART_Transmit(&hlpuart1, "Hello!\n", 7, 100);
-  HAL_Delay (5000);
+	/* Start scheduler */
+	//osKernelStart();
+	/* We should never get here as control is now taken by the scheduler */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	HAL_UART_Transmit(&hlpuart1, "Hello!\n", 7, 100);
+	//HAL_Delay (5000);
 
-
-  while (1)
-  {
-    HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-
-    rslt = bmp3_get_status(&status, &dev);
-	bmp3_check_rslt("bmp3_get_status", rslt);
-
-	/* Read temperature and pressure data iteratively based on data ready interrupt */
-	if ((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE))
+	while (1)
 	{
-		/*
-		 * First parameter indicates the type of data to be read
-		 * BMP3_PRESS_TEMP : To read pressure and temperature data
-		 * BMP3_TEMP       : To read only temperature data
-		 * BMP3_PRESS      : To read only pressure data
-		 */
-		rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &data, &dev);
-		bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
-		/* NOTE : Read status register again to clear data ready interrupt status */
 		rslt = bmp3_get_status(&status, &dev);
 		bmp3_check_rslt("bmp3_get_status", rslt);
 
-		//#ifdef BMP3_FLOAT_COMPENSATION
-		HAL_UART_Transmit(&hlpuart1, "Data:\n", 6, 100);
-		HAL_UART_Transmit(&hlpuart1, &data.temperature, sizeof(data.temperature), 1000);
-		HAL_UART_Transmit(&hlpuart1, &data.pressure,  sizeof(data.pressure), 1000);
+		//rslt = get_sensor_status(&status, &dev);
+		//bmp3_check_rslt("bmp3_get_status", rslt);
+
+		/*while (!((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE)))
+		{
+			rslt = bmp3_get_status(&status, &dev);
+			bmp3_check_rslt("bmp3_get_status", rslt);
+		}
+		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);*/
+
+		/* Read temperature and pressure data iteratively based on data ready interrupt */
+		if ((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE))
+		{
+			/*
+			 * First parameter indicates the type of data to be read
+			 * BMP3_PRESS_TEMP : To read pressure and temperature data
+			 * BMP3_TEMP       : To read only temperature data
+			 * BMP3_PRESS      : To read only pressure data
+			 */
+			rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &data, &dev);
+			bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+
+			/* NOTE : Read status register again to clear data ready interrupt status */
+			rslt = bmp3_get_status(&status, &dev);
+			bmp3_check_rslt("bmp3_get_status", rslt);
+
+			//#ifdef BMP3_FLOAT_COMPENSATION
+			HAL_UART_Transmit(&hlpuart1, "Data:\n", 6, 100);
+			HAL_UART_Transmit(&hlpuart1, &data.temperature, sizeof(data.temperature), 1000);
+			HAL_UART_Transmit(&hlpuart1, &data.pressure,  sizeof(data.pressure), 1000);
+		}
+
+		//HAL_UART_Transmit(&hlpuart1, "not ready\n", 10, 100);
+
+
+		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+
+
+	/* USER CODE END WHILE */
+
+	/* USER CODE BEGIN 3 */
 	}
-
-    HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-    HAL_Delay (1000);
-
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 }
 
 /**
