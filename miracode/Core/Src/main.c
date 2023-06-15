@@ -31,6 +31,10 @@
 #include "usbd_cdc_if.h"
 #include "usbd_cdc.h"
 
+// SD card
+#include "ff.h"
+#include "ffconf.h"
+
 // Parsing of GPS data
 #include "nmea_parse.h"
 /* USER CODE END Includes */
@@ -42,6 +46,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 
 /* USER CODE END PD */
 
@@ -98,7 +103,7 @@ int main(void)
 	FRESULT res; /* FatFs function common result code */
 	UINT byteswritten, bytesread; /* File write/read counts */
 	uint8_t wtext[50] = "STM32 FATFS works great!"; /* File write buffer. */
-	uint8_t rtext[100];/* File read buffer */
+	uint8_t rtext[_MAX_SS];/* File read buffer */
 	uint8_t usberr;
 
 	// For GPS Module
@@ -164,34 +169,35 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
+
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
-  	  	  	  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  	  	  	  HAL_Delay (300);
-  	  	  	  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
   	  	  	  HAL_Delay (1000);
+  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  HAL_Delay (300);
       	}
   // here f_mount == FR_OK -> mounting was a success
   else
       	{
 	  // f_mkfs
-	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+	  if( f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext))!= FR_OK)
       	    {
-  				  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-  				  HAL_Delay (300);
-  				  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (1000);
+  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  				  HAL_Delay (300);
       	    }
 	  else
       		{
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-				  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-				  HAL_Delay (300);
-				  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				  HAL_Delay (1000);
+				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+				  HAL_Delay (300);
 				}
 			else
 				{
@@ -204,10 +210,10 @@ int main(void)
 				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
 				if((byteswritten == 0) || (res != FR_OK))
 					{
-					  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					  HAL_Delay (300);
-					  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					  HAL_Delay (1000);
+					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					  HAL_Delay (300);
 					}
 				else
 					{
@@ -263,16 +269,15 @@ int main(void)
 
 		  // sets data_ready to 0, because it was 1 when program enters this if block
 		  data_ready ^= 1;
-		  // sets send_ready to 0 no matter what it was
+		  // sets send_ready to 1
 		  send_ready |= 1;
 
 	  }
 	  else
 	  {
 
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		  while( CDC_Transmit_FS(data, strlen(data)) == USBD_BUSY );
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 
 	  }
 
