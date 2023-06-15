@@ -37,7 +37,7 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define RXBUFSIZE 700
+#define RXBUFSIZE 800
 extern uint8_t rxBuffer1[RXBUFSIZE];
 extern uint8_t rxBuffer2[RXBUFSIZE];
 
@@ -46,6 +46,7 @@ extern volatile uint8_t rxBufferPos;
 extern volatile uint8_t tick;
 extern volatile uint8_t step;
 extern volatile unsigned data_ready;
+extern volatile unsigned send_ready;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

@@ -48,6 +48,7 @@ volatile uint8_t *rxBuffer;
 volatile uint8_t rxBufferPos;
 volatile int messagecounter = 0;
 volatile unsigned data_ready;
+volatile unsigned send_ready = 1;
 
 /* USER CODE END PV */
 
@@ -232,26 +233,22 @@ void USART2_IRQHandler(void)
     if (rxBufferPos < RXBUFSIZE - 1)
     	{ rxBuffer[rxBufferPos++] = (uint8_t) c; }
 
-    if ((c == '\n')) { //(c == '\r') ||
-    	messagecounter++;
-    	if (messagecounter == 12)
-		  { messagecounter = 0;
-			rxBuffer[rxBufferPos] = 0;
-			if (rxBufferPos > 1) {
-				data_ready |= 1;
-			}
-			rxBufferPos = 0;
-			if (rxBuffer == rxBuffer1) {rxBuffer = rxBuffer2;}
-			else {rxBuffer = rxBuffer1;}
-		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-    } }
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+    if ((c == '\n') && send_ready) { //(c == '\r') ||
+		rxBuffer[rxBufferPos] = 0;
+		data_ready |= 1;
+		send_ready ^= 1;
+		rxBufferPos = 0;
+		if (rxBuffer == rxBuffer1) {rxBuffer = rxBuffer2;}
+		else {rxBuffer = rxBuffer1;}
+		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+    }
+    HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  //rchar = huart2.Instance->RDR;
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
-  //ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
-  /* USER CODE END USART2_IRQn 1 */
+	/* USER CODE END USART2_IRQn 0 */
+	HAL_UART_IRQHandler(&huart2);
+	/* USER CODE BEGIN USART2_IRQn 1 */
+	//ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
+	/* USER CODE END USART2_IRQn 1 */
 }
 
 /**

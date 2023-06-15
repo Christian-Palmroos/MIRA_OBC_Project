@@ -314,8 +314,9 @@ int main(void)
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 			  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  rxBuffer = rxBuffer2;
-			  data_ready |= 0;
+			  //rxBuffer = rxBuffer2;
+			  data_ready ^= 1;
+			  send_ready |= 1;
 			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
 		  }
@@ -326,8 +327,9 @@ int main(void)
 			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 			  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
 			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-			  rxBuffer = rxBuffer1;
-			  data_ready |= 0;
+			  //rxBuffer = rxBuffer1;
+			  data_ready ^= 1;
+			  send_ready |= 1;
 			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
 		  }
