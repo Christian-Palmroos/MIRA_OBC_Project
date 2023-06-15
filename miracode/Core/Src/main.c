@@ -23,10 +23,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "usbd_cdc_if.h"
+
+// Exception handlers
 #include "stm32l4xx_it.h"
 
+// USB data transfers
+#include "usbd_cdc_if.h"
 #include "usbd_cdc.h"
+
+// Parsing of GPS data
+#include "nmea_parse.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,13 +108,9 @@ int main(void)
 	// For USB Transmission
 	USBD_HandleTypeDef hUsbDeviceFS;
 	uint8_t USB_Tx_STATUS;
-	uint8_t *data = "Hello!\n";
 
-	uint8_t USB_TxBuffer_FS;
-
-	uint32_t USB_TxBuffer_Length = 1000;
-
-	uint8_t USBD_TxBuffer_Status;
+	// Placeholder data for testing/debugging
+	char data[10] = "Hello!\n";
 
   /* USER CODE END 1 */
 
@@ -165,9 +167,9 @@ int main(void)
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
-  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
   	  	  	  HAL_Delay (300);
-  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  	  	  	  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
   	  	  	  HAL_Delay (1000);
       	}
   // here f_mount == FR_OK -> mounting was a success
@@ -176,9 +178,9 @@ int main(void)
 	  // f_mkfs
 	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
       	    {
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  				  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (300);
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  				  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (1000);
       	    }
 	  else
@@ -186,9 +188,9 @@ int main(void)
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+				  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				  HAL_Delay (300);
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+				  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				  HAL_Delay (1000);
 				}
 			else
@@ -202,9 +204,9 @@ int main(void)
 				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
 				if((byteswritten == 0) || (res != FR_OK))
 					{
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					  HAL_Delay (300);
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					  HAL_Delay (1000);
 					}
 				else
@@ -224,76 +226,55 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
   while (1)
   {
 
 	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
 
-	  // Check here if data is ready
+	  // Check here if data received from the GPS module through UART2 is ready
 	  if (data_ready)
 	  {
 
 		  if (rxBuffer == rxBuffer1)
 		  {
-			  // USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
 
-			  // Saving the transmit status for debugging
-			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
-			  CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
+			  while( CDC_Transmit_FS(rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY );
+
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 		  }
 		  else
 		  {
-			  // Saving the transmit status for debugging
-			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
-			  CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
+
+			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
+			  while( CDC_Transmit_FS(rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY );
+
+			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 
 		  }
 
-		  data_ready = 0;
+		  // sets data_ready to 0, because it was 1 when program enters this if block
+		  data_ready ^= 1;
+		  // sets send_ready to 0 no matter what it was
+		  send_ready |= 1;
+
 	  }
 	  else
 	  {
-		  // Flash LED4
+
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		  while( CDC_Transmit_FS(data, strlen(data)) == USBD_BUSY );
+		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
 	  }
-
-
-	  // This returns HAL_TIMEOUT ???
-	  // UART2_Rx_STATUS = HAL_UART_Receive (&huart2, UART2_RxBuffer, sizeof(UART2_RxBuffer), 5000);
-	  // UART2_Rx_STATUS = HAL_BUSY;
-
-	  // Transmit should be handled through the USB port
-	  /*
-	  if(UART2_Rx_STATUS == HAL_OK)
-	  	  {
-		  // HAL_UART_Transmit (&huart1, UART2_rxBuffer, sizeof(UART2_rxBuffer), 5000);
-		  // HAL_UART_Transmit (&huart1, "b \n", 3, 5000);
-
-		  CDC_Transmit_FS ("b \n", 3);
-
-		  // Flash LED1 twice
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (100);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  	  }
-	  else
-	  	  {
-
-		  // Flash LED4 twice
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (100);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  }
-		*/
 
     /* USER CODE END WHILE */
 
