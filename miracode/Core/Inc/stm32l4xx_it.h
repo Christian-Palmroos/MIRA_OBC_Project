@@ -37,7 +37,7 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define RXBUFSIZE 120
+#define RXBUFSIZE 700
 extern uint8_t rxBuffer1[RXBUFSIZE];
 extern uint8_t rxBuffer2[RXBUFSIZE];
 

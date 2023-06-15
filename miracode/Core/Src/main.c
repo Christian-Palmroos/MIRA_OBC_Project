@@ -27,6 +27,16 @@
 #include "stm32l4xx_it.h"
 
 #include "usbd_cdc.h"
+
+#include "bmp3.h"
+#include "bmp3_defs.h"
+#include "bmp390_task.h"
+#include "common_porting.h"
+
+//include the library
+#include "nmea_parse.h"
+#define BufferSize 512
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,10 +115,51 @@ int main(void)
 	uint8_t *data = "Hello!\n";
 
 	uint8_t USB_TxBuffer_FS;
-
 	uint32_t USB_TxBuffer_Length = 1000;
-
 	uint8_t USBD_TxBuffer_Status;
+
+	//create a GPS data structure
+	GPS myData;
+
+	//read serial data to a buffer,
+	//serial readout implementation may vary depending on your needs
+	//the library is able to work with any buffer size, as long as it contains at least one whole NMEA message
+	uint8_t DataBuffer[BufferSize];
+
+	int8_t rslt;
+	uint16_t settings_sel;
+	struct bmp3_dev dev;
+	struct bmp3_data bmpdata = { 0 };
+	struct bmp3_settings settings = { 0 };
+	struct bmp3_status status = { { 0 } };
+
+	/* Interface reference is given as a parameter
+	 *         For I2C : BMP3_I2C_INTF
+	 *         For SPI : BMP3_SPI_INTF
+	 */
+	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
+	bmp3_check_rslt("bmp3_interface_init", rslt);
+
+	rslt = bmp3_init(&dev);
+	bmp3_check_rslt("bmp3_init", rslt);
+
+	settings.int_settings.drdy_en = BMP3_DISABLE;
+	settings.press_en = BMP3_ENABLE;
+	settings.temp_en = BMP3_ENABLE;
+
+	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
+	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
+	settings.odr_filter.odr = BMP3_ODR_100_HZ;
+
+	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
+				   BMP3_SEL_DRDY_EN;
+
+	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
+	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
+
+	settings.op_mode = BMP3_MODE_NORMAL;
+	rslt = bmp3_set_op_mode(&settings, &dev);
+	bmp3_check_rslt("bmp3_set_op_mode", rslt);
 
   /* USER CODE END 1 */
 
@@ -233,30 +284,91 @@ int main(void)
 	  if (data_ready)
 	  {
 
+		  //when enough data is received point it to the parser,
+		  //do it outside of a UART interrupt to avoid overrun errors
+		  /*nmea_parse(&myData, DataBuffer);
+
+		  //if(myData.fix == 1) {
+		      //do something with the data
+		      //at ex.
+		      double latitude = myData.latitude;
+		      double longitude = myData.longitude;
+		      while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
+		      while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
+		      while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		      while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
+		      while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+		  //}*/
+
 		  if (rxBuffer == rxBuffer1)
 		  {
 			  // USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
 
 			  // Saving the transmit status for debugging
 			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
-			  CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
+			  /*USBD_TxBuffer_Status = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
+			  while (USBD_TxBuffer_Status == USBD_BUSY);
+			  	  USBD_TxBuffer_Status = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));*/
+
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  rxBuffer = rxBuffer2;
+			  data_ready |= 0;
+			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
 		  }
 		  else
 		  {
 			  // Saving the transmit status for debugging
 			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
-			  CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
+			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+			  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
+			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+			  rxBuffer = rxBuffer1;
+			  data_ready |= 0;
+			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
 		  }
 
-		  data_ready = 0;
+		  //data_ready = 0;
 	  }
-	  else
+	  /*else
 	  {
 		  // Flash LED4
 		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-	  }
+		  //HAL_Delay(100);
+	  }*/
+
+	  rslt = bmp3_get_status(&status, &dev);
+		bmp3_check_rslt("bmp3_get_status", rslt);
+
+
+		/* Read temperature and pressure data iteratively based on data ready interrupt */
+		if ((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE))
+		{
+			/*
+			 * First parameter indicates the type of data to be read
+			 * BMP3_PRESS_TEMP : To read pressure and temperature data
+			 * BMP3_TEMP       : To read only temperature data
+			 * BMP3_PRESS      : To read only pressure data
+			 */
+			rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
+			bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+
+			/* NOTE : Read status register again to clear data ready interrupt status */
+			rslt = bmp3_get_status(&status, &dev);
+			bmp3_check_rslt("bmp3_get_status", rslt);
+
+
+			//#ifdef BMP3_FLOAT_COMPENSATION
+			while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
+			while (CDC_Transmit_FS (&bmpdata.temperature, strlen((uint16_t)bmpdata.temperature)) == USBD_BUSY);
+			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+			while (CDC_Transmit_FS (&bmpdata.pressure, strlen((uint16_t)bmpdata.pressure)) == USBD_BUSY);
+			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		}
 
 
 	  // This returns HAL_TIMEOUT ???

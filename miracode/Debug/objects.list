@@ -1,4 +1,8 @@
+"./Core/Src/bmp3.o"
+"./Core/Src/bmp390_task.o"
+"./Core/Src/common_porting.o"
 "./Core/Src/main.o"
+"./Core/Src/nmea_parse.o"
 "./Core/Src/stm32l4xx_hal_msp.o"
 "./Core/Src/stm32l4xx_it.o"
 "./Core/Src/system_stm32l4xx.o"
