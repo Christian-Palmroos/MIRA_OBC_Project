@@ -35,7 +35,6 @@
 
 //include the library
 #include "nmea_parse.h"
-#define BufferSize 512
 
 /* USER CODE END Includes */
 
@@ -120,11 +119,6 @@ int main(void)
 
 	//create a GPS data structure
 	GPS myData;
-
-	//read serial data to a buffer,
-	//serial readout implementation may vary depending on your needs
-	//the library is able to work with any buffer size, as long as it contains at least one whole NMEA message
-	uint8_t DataBuffer[BufferSize];
 
 	int8_t rslt;
 	uint16_t settings_sel;
@@ -280,97 +274,100 @@ int main(void)
 
 	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
 
-	  // Check here if data is ready
+	  // GPS
 	  if (data_ready)
 	  {
 
-		  //when enough data is received point it to the parser,
-		  //do it outside of a UART interrupt to avoid overrun errors
-		  /*nmea_parse(&myData, DataBuffer);
-
-		  //if(myData.fix == 1) {
-		      //do something with the data
-		      //at ex.
-		      double latitude = myData.latitude;
-		      double longitude = myData.longitude;
-		      while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
-		      while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
-		      while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		      while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
-		      while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-
-		  //}*/
-
 		  if (rxBuffer == rxBuffer1)
 		  {
-			  // USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer (&hUsbDeviceFS, rxBuffer2, 120);
-
-			  // Saving the transmit status for debugging
-			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
-			  /*USBD_TxBuffer_Status = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));
-			  while (USBD_TxBuffer_Status == USBD_BUSY);
-			  	  USBD_TxBuffer_Status = CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2));*/
-
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
+			  /*//when enough data is received point it to the parser,
+			  //do it outside of a UART interrupt to avoid overrun errors
+			  nmea_parse(&myData, rxBuffer2);
+
+			  //if(myData.fix == 1) {
+				  //do something with the data
+				  //at ex.
+			  double latitude = myData.latitude;
+			  double longitude = myData.longitude;
+			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
+			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
+			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+			  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
+			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+			  //}*/
+
+
 			  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  //rxBuffer = rxBuffer2;
-			  data_ready ^= 1;
-			  send_ready |= 1;
-			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
 
 		  }
 		  else
 		  {
-			  // Saving the transmit status for debugging
-			  // USB_Tx_STATUS = CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1));
 			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
+			  /*//when enough data is received point it to the parser,
+			  //do it outside of a UART interrupt to avoid overrun errors
+			  nmea_parse(&myData, rxBuffer1);
+
+			  //if(myData.fix == 1) {
+				  //do something with the data
+				  //at ex.
+			  double latitude = myData.latitude;
+			  double longitude = myData.longitude;
+			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
+			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
+			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+			  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
+			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+			  //}*/
+
+
 			  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
 			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-			  //rxBuffer = rxBuffer1;
-			  data_ready ^= 1;
-			  send_ready |= 1;
-			  //while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+
 
 		  }
 
-		  //data_ready = 0;
+		  data_ready ^= 1;
+		  send_ready |= 1;
+		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
-	  /*else
-	  {
-		  // Flash LED4
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  //HAL_Delay(100);
-	  }*/
+
 
 	  rslt = bmp3_get_status(&status, &dev);
-		bmp3_check_rslt("bmp3_get_status", rslt);
+	  bmp3_check_rslt("bmp3_get_status", rslt);
 
 
-		/* Read temperature and pressure data iteratively based on data ready interrupt */
-		if ((rslt == BMP3_OK) && (status.intr.drdy == BMP3_ENABLE))
-		{
-			/*
-			 * First parameter indicates the type of data to be read
-			 * BMP3_PRESS_TEMP : To read pressure and temperature data
-			 * BMP3_TEMP       : To read only temperature data
-			 * BMP3_PRESS      : To read only pressure data
-			 */
-			rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
-			bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+	  /* Read temperature and pressure data iteratively based on data ready interrupt */
+	  if ((rslt == BMP3_OK) && (status.intr.drdy))
+	  {
+		  /*
+		   * First parameter indicates the type of data to be read
+		   * BMP3_PRESS_TEMP : To read pressure and temperature data
+		   * BMP3_TEMP       : To read only temperature data
+		   * BMP3_PRESS      : To read only pressure data
+		   */
+		  rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
+		  bmp3_check_rslt("bmp3_get_sensor_data", rslt);
 
-			/* NOTE : Read status register again to clear data ready interrupt status */
-			rslt = bmp3_get_status(&status, &dev);
-			bmp3_check_rslt("bmp3_get_status", rslt);
+		  /* NOTE : Read status register again to clear data ready interrupt status */
+		  rslt = bmp3_get_status(&status, &dev);
+		  bmp3_check_rslt("bmp3_get_status", rslt);
 
 
-			//#ifdef BMP3_FLOAT_COMPENSATION
-			while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
-			while (CDC_Transmit_FS (&bmpdata.temperature, strlen((uint16_t)bmpdata.temperature)) == USBD_BUSY);
-			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-			while (CDC_Transmit_FS (&bmpdata.pressure, strlen((uint16_t)bmpdata.pressure)) == USBD_BUSY);
-			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		}
+		  //#ifdef BMP3_FLOAT_COMPENSATION
+		  while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
+		  while (CDC_Transmit_FS (&bmpdata.temperature, strlen((uint16_t)bmpdata.temperature)) == USBD_BUSY);
+		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		  while (CDC_Transmit_FS (&bmpdata.pressure, strlen((uint16_t)bmpdata.pressure)) == USBD_BUSY);
+		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+	  }
 
 
 	  // This returns HAL_TIMEOUT ???
