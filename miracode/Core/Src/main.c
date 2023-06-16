@@ -182,7 +182,8 @@ int main(void)
   else
       	{
 	  // f_mkfs
-	  if( f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext))!= FR_OK)
+	  // if( f_mkfs((TCHAR const*)SDPath, FM_FAT32, 0, rtext, sizeof(rtext))!= FR_OK)
+	  if (0)
       	    {
   				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
   				  HAL_Delay (1000);
