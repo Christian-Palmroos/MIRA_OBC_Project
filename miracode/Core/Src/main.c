@@ -386,6 +386,7 @@ int main(void)
 	  // GPS
 	  if (data_ready)
 	  {
+		  while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 		  if (rxBuffer == rxBuffer1)
 		  {
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
@@ -444,6 +445,8 @@ int main(void)
 
 		  data_ready ^= 1;
 		  send_ready |= 1;
+
+		  while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
 		  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
 
@@ -459,6 +462,7 @@ int main(void)
 	  /* Read temperature and pressure data iteratively based on data ready interrupt */
 	  if (tick == 0)//(((int)rslt == BMP3_OK) && (tick == 0) && ((int)status.intr.drdy == BMP3_ENABLE))
 	  {
+
 		  settings.op_mode = BMP3_MODE_FORCED;
 			rslt = bmp3_set_op_mode(&settings, &dev);
 			bmp3_check_rslt("bmp3_set_op_mode", rslt);
@@ -479,11 +483,13 @@ int main(void)
 
 		  //#ifdef BMP3_FLOAT_COMPENSATION
 		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		  while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
+
+		  while (CDC_Transmit_FS ("BMP390 START\n", 13) == USBD_BUSY);
 		  sprintf(TempBuffer, "%.2f\n", bmpdata.temperature);
 		  sprintf(PresBuffer, "%.2f\n", bmpdata.pressure);
 		  while (CDC_Transmit_FS (TempBuffer, strlen(TempBuffer)) == USBD_BUSY);
 		  while (CDC_Transmit_FS (PresBuffer, strlen(PresBuffer)) == USBD_BUSY);
+		  while (CDC_Transmit_FS ("BMP390 END\n", 11) == USBD_BUSY);
 		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
 

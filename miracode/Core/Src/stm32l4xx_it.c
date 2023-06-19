@@ -49,6 +49,7 @@ volatile uint8_t rxBufferPos;
 volatile unsigned data_ready;
 volatile unsigned send_ready = 1;
 volatile uint8_t tick;
+volatile uint8_t tickGPS;
 
 /* USER CODE END PV */
 
@@ -216,6 +217,7 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 0 */
   if (tick) {tick--;}
+  if (tickGPS) {tickGPS--;}
   /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 0 */
   HAL_TIM_IRQHandler(&htim17);
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
@@ -224,7 +226,7 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART2 global interrupt.
+  * @brief This function handles Uextern volatile uint8_t tick;SART2 global interrupt.
   */
 void USART2_IRQHandler(void)
 {
@@ -233,7 +235,8 @@ void USART2_IRQHandler(void)
     if (rxBufferPos < RXBUFSIZE - 1)
     	{ rxBuffer[rxBufferPos++] = (uint8_t) c; }
 
-    if ((c == '\n') && send_ready) { //(c == '\r') ||
+    if ((c == '\n') && send_ready && tickGPS == 0) { //(c == '\r') ||
+    	tickGPS = 10;
 		rxBuffer[rxBufferPos] = 0;
 		data_ready |= 1;
 		send_ready ^= 1;

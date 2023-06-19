@@ -44,6 +44,7 @@ extern uint8_t rxBuffer2[RXBUFSIZE];
 extern volatile uint8_t *rxBuffer;
 extern volatile uint8_t rxBufferPos;
 extern volatile uint8_t tick;
+extern volatile uint8_t tickGPS;
 extern volatile uint8_t step;
 extern volatile unsigned data_ready;
 extern volatile unsigned send_ready;
