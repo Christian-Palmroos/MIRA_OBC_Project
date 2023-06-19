@@ -9,7 +9,7 @@
 #include "main.h"
 
 extern UART_HandleTypeDef hlpuart1;
-extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c2;
 //extern SPI_HandleTypeDef hspi1;
 
 uint8_t GTXBuffer[512], GRXBuffer[2048];

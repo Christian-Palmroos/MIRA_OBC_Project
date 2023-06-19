@@ -46,9 +46,9 @@ uint8_t rxBuffer1[RXBUFSIZE];
 uint8_t rxBuffer2[RXBUFSIZE];
 volatile uint8_t *rxBuffer;
 volatile uint8_t rxBufferPos;
-volatile int messagecounter = 0;
 volatile unsigned data_ready;
 volatile unsigned send_ready = 1;
+volatile uint8_t tick;
 
 /* USER CODE END PV */
 
@@ -215,7 +215,7 @@ void SysTick_Handler(void)
 void TIM1_TRG_COM_TIM17_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 0 */
-
+  if (tick) {tick--;}
   /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 0 */
   HAL_TIM_IRQHandler(&htim17);
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */

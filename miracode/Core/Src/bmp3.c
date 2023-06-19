@@ -761,7 +761,7 @@ int8_t bmp3_init(struct bmp3_dev *dev)
 
 
 	/* Read the chip-id of bmp3 sensor */
-        rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);
+        //rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);
 	
         /* Read the chip-id of bmp3 sensor */
         rslt = bmp3_get_regs(BMP3_REG_CHIP_ID, &chip_id, 1, dev);

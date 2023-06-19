@@ -5,7 +5,7 @@
 #include "user_define.h"
 
 
-#define I2C_HANDLE	(hi2c1)
+#define I2C_HANDLE	(hi2c2)
 #define SPI_HANDLE	(hspi1)
 #define UART_HANDLE	(hlpuart1)
 

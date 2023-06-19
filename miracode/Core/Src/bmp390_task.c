@@ -3,6 +3,7 @@
 #include "stm32l4xx_hal.h"
 #include "bmp390_task.h"
 #include "bmp3.h"
+#include "usbd_cdc.h"
 
 #if defined(USE_BMP390)
 
@@ -12,7 +13,7 @@ extern volatile uint8_t int2_flag;
 static uint8_t dev_addr = 0;
 
 void bmp3_check_rslt(const char api_name[], int8_t rslt)
-{/*
+{
     switch (rslt)
     {
         case BMP3_OK:
@@ -20,30 +21,38 @@ void bmp3_check_rslt(const char api_name[], int8_t rslt)
             // Do nothing
             break;
         case BMP3_E_NULL_PTR:
-            PDEBUG("API [%s] Error [%d] : Null pointer\r\n", api_name, rslt);
+            //PDEBUG("API [%s] Error [%d] : Null pointer\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR1\n", 7);
             break;
         case BMP3_E_COMM_FAIL:
-            PDEBUG("API [%s] Error [%d] : Communication failure\r\n", api_name, rslt);
-            break;
+        	//PDEBUG("API [%s] Error [%d] : Communication failure\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR2\n", 6);
+        	break;
         case BMP3_E_INVALID_LEN:
-            PDEBUG("API [%s] Error [%d] : Incorrect length parameter\r\n", api_name, rslt);
-            break;
+        	//PDEBUG("API [%s] Error [%d] : Incorrect length parameter\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR3\n", 6);
+        	break;
         case BMP3_E_DEV_NOT_FOUND:
-            PDEBUG("API [%s] Error [%d] : Device not found\r\n", api_name, rslt);
-            break;
+        	//PDEBUG("API [%s] Error [%d] : Device not found\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR4\n", 6);
+        	break;
         case BMP3_E_CONFIGURATION_ERR:
-            PDEBUG("API [%s] Error [%d] : Configuration Error\r\n", api_name, rslt);
-            break;
+        	//PDEBUG("API [%s] Error [%d] : Configuration Error\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR5\n", 6);
+        	break;
         case BMP3_W_SENSOR_NOT_ENABLED:
-            PDEBUG("API [%s] Error [%d] : Warning when Sensor not enabled\r\n", api_name, rslt);
-            break;
-        case BMP3_W_INundefinedVALID_FIFO_REQ_FRAME_CNT:
-            PDEBUG("API [%s] Error [%d] : Warning when Fifo watermark level is not in limit\r\n", api_name, rslt);
-            break;
+        	//PDEBUG("API [%s] Error [%d] : Warning when Sensor not enabled\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR6\n", 6);
+        	break;
+        case BMP3_W_INVALID_FIFO_REQ_FRAME_CNT:
+        	//PDEBUG("API [%s] Error [%d] : Warning when Fifo watermark level is not in limit\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR7\n", 6);
+        	break;
         default:
-            PDEBUG("API [%s] Error [%d] : Unknown error code\r\n", api_name, rslt);
-            break;
-    }*/
+        	//PDEBUG("API [%s] Error [%d] : Unknown error code\r\n", api_name, rslt);
+        	CDC_Transmit_FS("ERROR8\n", 6);
+        	break;
+    }
 }
 
 BMP3_INTF_RET_TYPE bmp3_interface_init(struct bmp3_dev *bmp3, uint8_t intf)

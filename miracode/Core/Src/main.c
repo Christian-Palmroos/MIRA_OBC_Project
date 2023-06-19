@@ -66,6 +66,10 @@ TIM_HandleTypeDef htim17;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+char output[32];
+uint8_t output_ctr = 0;
+unsigned int hexstatus;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -87,6 +91,82 @@ static void MX_NVIC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void hex_byte(uint8_t data, uint8_t p[]) {
+    uint8_t temp;
+
+    temp = data >> 4;
+    temp += '0';
+    if (temp >= (10 + '0')) {
+        temp += ('A' - 10 - '0');
+    }
+    p[0] = temp;
+    temp = data & 0x0F;
+    temp += '0';
+    if (temp >= (10 + '0')) {
+        temp += ('A' - 10 - '0');
+    }
+    p[1] = temp;
+}
+
+uint32_t put_one_char(char c) {
+    output[output_ctr] = c;
+    if (output_ctr < 32 - 1) {
+        output_ctr++;
+        return 0;
+    }
+    return 1;
+}
+
+uint32_t puthex(uint8_t x) {
+    char c;
+    if (((x & 0xF0) >> 4) > 9) {
+        c = ((x & 0xF0) >> 4) + 55;
+    } else {
+        c = ((x & 0xF0) >> 4) + 48;
+    }
+    if (put_one_char(c)) return 1;
+
+    if (((x & 0x0F)) > 9) {
+        c = (x & 0x0F) + 55;
+    } else {
+        c = (x & 0x0F) + 48;
+    }
+    if (put_one_char(c)) return 1;
+
+    put_one_char(0);
+    return 0;
+}
+
+uint32_t puthexword(uint16_t x) {
+    if (puthex((x & 0xFF00) >> 8)) return 1;
+    if (puthex((x & 0x00FF))) return 1;
+    return 0;
+}
+
+uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
+    char c;
+    uint8_t r;
+
+    r = x / 10000;
+    if ((r) || (zeros > 3)) put_one_char(r + 48);
+    x = x - 10000 * r;
+
+    r = x / 1000;
+    if ((r) || (zeros > 2)) put_one_char(r + 48);
+    x = x - 1000 * r;
+
+    r = x / 100;
+    if ((r) || (zeros > 1)) put_one_char(r + 48);
+    x = x - 100 * r;
+
+    r = x / 10;
+    if ((r) || (zeros)) put_one_char(r + 48);
+    x = x - 10 * r;
+
+    put_one_char(x + 48);
+
+    return 0;
+}
 
 /* USER CODE END 0 */
 
@@ -97,7 +177,6 @@ static void MX_NVIC_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
 	FRESULT res; /* FatFs function common result code */
 	UINT byteswritten, bytesread; /* File write/read counts */
 	uint8_t wtext[50] = "STM32 FATFS works great!"; /* File write buffer. */
@@ -126,35 +205,14 @@ int main(void)
 	struct bmp3_data bmpdata = { 0 };
 	struct bmp3_settings settings = { 0 };
 	struct bmp3_status status = { { 0 } };
+	uint8_t TempBuffer[25] = {0};
+	uint8_t PresBuffer[25] = {0};
 
-	/* Interface reference is given as a parameter
-	 *         For I2C : BMP3_I2C_INTF
-	 *         For SPI : BMP3_SPI_INTF
-	 */
-	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
-	bmp3_check_rslt("bmp3_interface_init", rslt);
-
-	rslt = bmp3_init(&dev);
-	bmp3_check_rslt("bmp3_init", rslt);
-
-	settings.int_settings.drdy_en = BMP3_DISABLE;
-	settings.press_en = BMP3_ENABLE;
-	settings.temp_en = BMP3_ENABLE;
-
-	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
-	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
-	settings.odr_filter.odr = BMP3_ODR_100_HZ;
-
-	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
-				   BMP3_SEL_DRDY_EN;
-
-	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
-	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
-
-	settings.op_mode = BMP3_MODE_NORMAL;
-	rslt = bmp3_set_op_mode(&settings, &dev);
-	bmp3_check_rslt("bmp3_set_op_mode", rslt);
-
+	//test
+	HAL_StatusTypeDef i2c2status;
+	uint8_t hello[7] = "Hello!\n";
+	uint8_t Buffer[25] = {0};
+	uint8_t Space[] = " - ";
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -172,7 +230,6 @@ int main(void)
 
   // This returned 0'\0', even though it's supposed to return either USBD_OK or USBD_FAIL
 //   USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer(&hUsbDeviceFS, USB_TxBuffer_FS, USB_TxBuffer_Length);
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -197,6 +254,35 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Interface reference is given as a parameter
+  	 *         For I2C : BMP3_I2C_INTF
+  	 *         For SPI : BMP3_SPI_INTF
+  	 */
+  	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
+  	bmp3_check_rslt("bmp3_interface_init", rslt);
+
+  	rslt = bmp3_init(&dev);
+  	bmp3_check_rslt("bmp3_init", rslt);
+
+  	settings.int_settings.drdy_en = BMP3_DISABLE;
+  	settings.int_settings.latch = BMP3_ENABLE;
+  	settings.press_en = BMP3_ENABLE;
+  	settings.temp_en = BMP3_ENABLE;
+
+  	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
+  	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
+  	settings.odr_filter.odr = BMP3_ODR_100_HZ;
+
+  	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
+  				   BMP3_SEL_DRDY_EN;
+
+  	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
+  	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
+
+  	/*settings.op_mode = BMP3_MODE_NORMAL;
+  	rslt = bmp3_set_op_mode(&settings, &dev);
+  	bmp3_check_rslt("bmp3_set_op_mode", rslt);*/
 
   volatile unsigned tmp;
 
@@ -265,6 +351,29 @@ int main(void)
 
 
 
+  HAL_TIM_Base_Start_IT(&htim17);
+  tick = 0;
+
+  uint8_t i = 0, ret;
+  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  HAL_Delay (5000);
+  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  //-[ I2C Bus Scanning ]-
+      for(i=1; i<128; i++)
+      {
+          ret = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 3, 5);
+          if (ret != HAL_OK) // No ACK Received At That Address
+          {
+        	  while (CDC_Transmit_FS (Space, strlen(Space)) == USBD_BUSY);
+          }
+          else if(ret == HAL_OK)
+          {
+              sprintf(Buffer, "0x%X", i);
+              while (CDC_Transmit_FS (Buffer, strlen(Buffer)) == USBD_BUSY);
+          }
+      }
+      //--[ Scanning Done ]--
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -277,7 +386,6 @@ int main(void)
 	  // GPS
 	  if (data_ready)
 	  {
-
 		  if (rxBuffer == rxBuffer1)
 		  {
 			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
@@ -289,7 +397,7 @@ int main(void)
 			  //if(myData.fix == 1) {
 				  //do something with the data
 				  //at ex.
-			  double latitude = myData.latitude;
+			  double latitude = myDISABLEData.latitude;
 			  double longitude = myData.longitude;
 			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
 			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
@@ -336,17 +444,25 @@ int main(void)
 
 		  data_ready ^= 1;
 		  send_ready |= 1;
-		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
 
+	  //test power monitor
+	  /* i2c2status = HAL_I2C_Master_Transmit(&hi2c2, 0x77<<1, &hello, strlen(hello), 10000);
+	  hexstatus = puthex(i2c2status);
+	  while (CDC_Transmit_FS(output, strlen(output)) == USBD_BUSY);
+	  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY); */
 
-	  rslt = bmp3_get_status(&status, &dev);
-	  bmp3_check_rslt("bmp3_get_status", rslt);
-
+	  //rslt = bmp3_get_status(&status, &dev);
+	  //bmp3_check_rslt("bmp3_get_status", rslt);
 
 	  /* Read temperature and pressure data iteratively based on data ready interrupt */
-	  if ((rslt == BMP3_OK) && (status.intr.drdy))
+	  if (tick == 0)//(((int)rslt == BMP3_OK) && (tick == 0) && ((int)status.intr.drdy == BMP3_ENABLE))
 	  {
+		  settings.op_mode = BMP3_MODE_FORCED;
+			rslt = bmp3_set_op_mode(&settings, &dev);
+			bmp3_check_rslt("bmp3_set_op_mode", rslt);
+		  tick = 10;
 		  /*
 		   * First parameter indicates the type of data to be read
 		   * BMP3_PRESS_TEMP : To read pressure and temperature data
@@ -362,10 +478,12 @@ int main(void)
 
 
 		  //#ifdef BMP3_FLOAT_COMPENSATION
-		  while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
-		  while (CDC_Transmit_FS (&bmpdata.temperature, strlen((uint16_t)bmpdata.temperature)) == USBD_BUSY);
 		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		  while (CDC_Transmit_FS (&bmpdata.pressure, strlen((uint16_t)bmpdata.pressure)) == USBD_BUSY);
+		  while (CDC_Transmit_FS ("BMP390\n", 7) == USBD_BUSY);
+		  sprintf(TempBuffer, "%.2f\n", bmpdata.temperature);
+		  sprintf(PresBuffer, "%.2f\n", bmpdata.pressure);
+		  while (CDC_Transmit_FS (TempBuffer, strlen(TempBuffer)) == USBD_BUSY);
+		  while (CDC_Transmit_FS (PresBuffer, strlen(PresBuffer)) == USBD_BUSY);
 		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
 
