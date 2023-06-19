@@ -5,6 +5,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Core/Src/lsm6dsox_reg.c \
 ../Core/Src/main.c \
 ../Core/Src/nmea_parse.c \
 ../Core/Src/stm32l4xx_hal_msp.c \
@@ -12,6 +13,7 @@ C_SRCS += \
 ../Core/Src/system_stm32l4xx.c 
 
 OBJS += \
+./Core/Src/lsm6dsox_reg.o \
 ./Core/Src/main.o \
 ./Core/Src/nmea_parse.o \
 ./Core/Src/stm32l4xx_hal_msp.o \
@@ -19,6 +21,7 @@ OBJS += \
 ./Core/Src/system_stm32l4xx.o 
 
 C_DEPS += \
+./Core/Src/lsm6dsox_reg.d \
 ./Core/Src/main.d \
 ./Core/Src/nmea_parse.d \
 ./Core/Src/stm32l4xx_hal_msp.d \
@@ -33,7 +36,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/nmea_parse.cyclo ./Core/Src/nmea_parse.d ./Core/Src/nmea_parse.o ./Core/Src/nmea_parse.su ./Core/Src/stm32l4xx_hal_msp.cyclo ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.cyclo ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/system_stm32l4xx.cyclo ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
+	-$(RM) ./Core/Src/lsm6dsox_reg.cyclo ./Core/Src/lsm6dsox_reg.d ./Core/Src/lsm6dsox_reg.o ./Core/Src/lsm6dsox_reg.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/nmea_parse.cyclo ./Core/Src/nmea_parse.d ./Core/Src/nmea_parse.o ./Core/Src/nmea_parse.su ./Core/Src/stm32l4xx_hal_msp.cyclo ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.cyclo ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/system_stm32l4xx.cyclo ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
 
 .PHONY: clean-Core-2f-Src
 

@@ -37,6 +37,11 @@
 
 // Parsing of GPS data
 #include "nmea_parse.h"
+
+// I2C
+#include "lsm6dsox_reg.h"
+#include "LSM6DSOXSensor.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,13 +75,17 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+char output[32];
+uint8_t output_ctr = 0;
+unsigned int hexstatus;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
-static void MX_I2C2_Init(void);
+static void MX_I2C1_Init(void);			// This is for the system that supervises voltage
+static void MX_I2C2_Init(void);			// This is the dock on the board next to UART2
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -89,6 +98,83 @@ static void MX_NVIC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+	void hex_byte(uint8_t data, uint8_t p[]) {
+		uint8_t temp;
+
+		temp = data >> 4;
+		temp += '0';
+		if (temp >= (10 + '0')) {
+			temp += ('A' - 10 - '0');
+		}
+		p[0] = temp;
+		temp = data & 0x0F;
+		temp += '0';
+		if (temp >= (10 + '0')) {
+			temp += ('A' - 10 - '0');
+		}
+		p[1] = temp;
+	}
+
+	uint32_t put_one_char(char c) {
+		output[output_ctr] = c;
+		if (output_ctr < 32 - 1) {
+			output_ctr++;
+			return 0;
+		}
+		return 1;
+	}
+
+	uint32_t puthex(uint8_t x) {
+		char c;
+		if (((x & 0xF0) >> 4) > 9) {
+			c = ((x & 0xF0) >> 4) + 55;
+		} else {
+			c = ((x & 0xF0) >> 4) + 48;
+		}
+		if (put_one_char(c)) return 1;
+
+		if (((x & 0x0F)) > 9) {
+			c = (x & 0x0F) + 55;
+		} else {
+			c = (x & 0x0F) + 48;
+		}
+		if (put_one_char(c)) return 1;
+
+		put_one_char(0);
+		return 0;
+	}
+
+	uint32_t puthexword(uint16_t x) {
+		if (puthex((x & 0xFF00) >> 8)) return 1;
+		if (puthex((x & 0x00FF))) return 1;
+		return 0;
+	}
+
+	uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
+		char c;
+		uint8_t r;
+
+		r = x / 10000;
+		if ((r) || (zeros > 3)) put_one_char(r + 48);
+		x = x - 10000 * r;
+
+		r = x / 1000;
+		if ((r) || (zeros > 2)) put_one_char(r + 48);
+		x = x - 1000 * r;
+
+		r = x / 100;
+		if ((r) || (zeros > 1)) put_one_char(r + 48);
+		x = x - 100 * r;
+
+		r = x / 10;
+		if ((r) || (zeros)) put_one_char(r + 48);
+		x = x - 10 * r;
+
+		put_one_char(x + 48);
+
+		return 0;
+	}
 
 /* USER CODE END 0 */
 
@@ -117,6 +203,13 @@ int main(void)
 	// Placeholder data for testing/debugging
 	char data[10] = "Hello!\n";
 
+	// File to be read from the SD card
+	char filename[12] = "LOG00001.TXT";
+
+	// Mode that the SD is opened with
+	BYTE SD_Mode = FA_READ;
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -131,9 +224,6 @@ int main(void)
 
   //HAL_UART_MspInit(&huart1);
   //HAL_UART_MspInit(&huart2);
-
-  // This returned 0'\0', even though it's supposed to return either USBD_OK or USBD_FAIL
-//   USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer(&hUsbDeviceFS, USB_TxBuffer_FS, USB_TxBuffer_Length);
 
   /* USER CODE END Init */
 
@@ -169,6 +259,10 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
+  // Creating a TwoWire interface for I2C
+  TwoWire hi2c2(I2C_SDA, I2C_SCL);
+  hi2c2.begin();
+
 
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
@@ -192,19 +286,20 @@ int main(void)
       	    }
 	  else
       		{
-			// Open file for writing (Create)
-			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+			// Open file for reading
+		  /*
+		   * In here res = FR_NOT_READY, meaning that "Failed to initialize due to no medium or hard error"
+		   */
+			// if(0)
+			if(f_open(&SDFile, *filename, SD_Mode) != FR_OK)
 				{
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-				  HAL_Delay (1000);
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-				  HAL_Delay (300);
+				// while(f_open(&SDFile, *filename, SD_Mode) != FR_OK);
+
 				}
 			else
 				{
 
-				// Write to the text file
-				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+				// res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
 				f_read(&SDFile, &rtext, 100, &bytesread);
 				//f_read();
 
@@ -226,6 +321,10 @@ int main(void)
       		}
       	}
       	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+
+
+      	// SD card reading was trash, move on to receiving data from LSM6DSO via I2C:
+
 
 
 
@@ -277,8 +376,8 @@ int main(void)
 	  else
 	  {
 
+		  // Transmitting a test data string
 		  while( CDC_Transmit_FS(data, strlen(data)) == USBD_BUSY );
-		  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 
 	  }
 
