@@ -39,8 +39,8 @@
 #include "nmea_parse.h"
 
 // I2C
-#include "lsm6dsox_reg.h"
-#include "LSM6DSOXSensor.h"
+#include "lsm6dso.h"
+#include "lsm6dso_reg.h"
 
 /* USER CODE END Includes */
 
@@ -209,6 +209,13 @@ int main(void)
 	// Mode that the SD is opened with
 	BYTE SD_Mode = FA_READ;
 
+	// LSM6DSO_Object_t
+	LSM6DSO_Object_t *AccObj;
+
+	// Acceleration data for LSM
+	LSM6DSO_Axes_t *Acceleration;
+	LSM6DSO_Axes_t *AngularVelocity;
+
 
   /* USER CODE END 1 */
 
@@ -250,7 +257,12 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-  volatile unsigned tmp;
+	// Setting up the I2C interface
+	LSM6DSO_Init(AccObj);
+
+	// Enabling translational and angular acceleration measurements
+	LSM6DSO_ACC_Enable(&AccObj);
+	LSM6DSO_GYRO_Enable(&AccObj);
 
   // Setting the buffer for UART2 data reading
   rxBuffer = rxBuffer1;
@@ -259,9 +271,6 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
-  // Creating a TwoWire interface for I2C
-  TwoWire hi2c2(I2C_SDA, I2C_SCL);
-  hi2c2.begin();
 
 
   // If not FR_OK, mounting failed, else it was successful
@@ -341,6 +350,18 @@ int main(void)
   {
 
 	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
+	  // LSM6DSO_FIFO_ACC_Get_Axes(LSM6DSO_Object_t *pObj, LSM6DSO_Axes_t *Acceleration)
+	  LSM6DSO_FIFO_ACC_Get_Axes(&hi2c2, Acceleration);
+
+	  // LSM6DSO_FIFO_GYRO_Get_Axes(LSM6DSO_Object_t *pObj, LSM6DSO_Axes_t *AngularVelocity)
+	  LSM6DSO_FIFO_GYRO_Get_Axes(&hi2c2, AngularVelocity);
+
+	  // Send the data via USB
+	  while( CDC_Transmit_FS(Acceleration, strlen(Acceleration)) == USBD_BUSY );
+	  while( CDC_Transmit_FS(AngularVelocity, strlen(AngularVelocity)) == USBD_BUSY );
+
+	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
 
 	  // Check here if data received from the GPS module through UART2 is ready
 	  if (data_ready)
