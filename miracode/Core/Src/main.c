@@ -84,8 +84,8 @@ unsigned int hexstatus;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);			// This is for the system that supervises voltage
-static void MX_I2C2_Init(void);			// This is the dock on the board next to UART2
+static void MX_I2C1_Init(void);
+static void MX_I2C2_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -210,7 +210,7 @@ int main(void)
 	BYTE SD_Mode = FA_READ;
 
 	// LSM6DSO_Object_t
-	LSM6DSO_Object_t *AccObj;
+	LSM6DSO_Object_t AccObj;
 
 	// Acceleration data for LSM
 	LSM6DSO_Axes_t *Acceleration;
@@ -257,12 +257,14 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-	// Setting up the I2C interface
-	LSM6DSO_Init(AccObj);
+  // Setting up the I2C interface
+  //LSM6DSO_Init(AccObj);
 
-	// Enabling translational and angular acceleration measurements
-	LSM6DSO_ACC_Enable(&AccObj);
-	LSM6DSO_GYRO_Enable(&AccObj);
+  // Enabling translational and angular acceleration measurements
+  //LSM6DSO_ACC_Enable(&AccObj);
+  //LSM6DSO_GYRO_Enable(&AccObj);
+
+
 
   // Setting the buffer for UART2 data reading
   rxBuffer = rxBuffer1;
@@ -271,6 +273,10 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
+  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 
 
   // If not FR_OK, mounting failed, else it was successful
@@ -341,20 +347,15 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  // HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  // HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-  // HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-  // HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-
   while (1)
   {
 
 	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
 	  // LSM6DSO_FIFO_ACC_Get_Axes(LSM6DSO_Object_t *pObj, LSM6DSO_Axes_t *Acceleration)
-	  LSM6DSO_FIFO_ACC_Get_Axes(&hi2c2, Acceleration);
+	  LSM6DSO_FIFO_ACC_Get_Axes(&AccObj, Acceleration);
 
 	  // LSM6DSO_FIFO_GYRO_Get_Axes(LSM6DSO_Object_t *pObj, LSM6DSO_Axes_t *AngularVelocity)
-	  LSM6DSO_FIFO_GYRO_Get_Axes(&hi2c2, AngularVelocity);
+	  LSM6DSO_FIFO_GYRO_Get_Axes(&AccObj, AngularVelocity);
 
 	  // Send the data via USB
 	  while( CDC_Transmit_FS(Acceleration, strlen(Acceleration)) == USBD_BUSY );
@@ -420,7 +421,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST) != HAL_OK)
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -434,8 +435,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 30;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV20;
+  RCC_OscInitStruct.PLL.PLLN = 9;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -452,14 +453,10 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
-
-  /** Enables the Clock Security System
-  */
-  HAL_RCC_EnableCSS();
 }
 
 /**
@@ -492,7 +489,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x307075B1;
+  hi2c1.Init.Timing = 0x00808CD2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -540,7 +537,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x307075B1;
+  hi2c2.Init.Timing = 0x00808CD2;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
