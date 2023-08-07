@@ -66,11 +66,10 @@ TIM_HandleTypeDef htim17;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+/* USER CODE BEGIN PV */
 char output[32];
 uint8_t output_ctr = 0;
 unsigned int hexstatus;
-
-/* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
@@ -180,8 +179,9 @@ int main(void)
 	FRESULT res; /* FatFs function common result code */
 	UINT byteswritten, bytesread; /* File write/read counts */
 	uint8_t wtext[50] = "STM32 FATFS works great!"; /* File write buffer. */
-	uint8_t rtext[100];/* File read buffer */
+	uint8_t rtext[2048];/* File read buffer */
 	uint8_t usberr;
+	//MKFS_PARM fmt_opt = {FM_ANY, 0, 32768, 0, 0};
 
 	// For GPS Module
 	HAL_StatusTypeDef UART2_Rx_STATUS;
@@ -293,13 +293,13 @@ int main(void)
   ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
+  HAL_Delay (5000);
   // If not FR_OK, mounting failed, else it was successful
   if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
       	{
-  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  	  	  	  HAL_Delay (300);
-  	  	  	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  	  	  	  HAL_Delay (1000);
+	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  HAL_Delay (30000);
+	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
       	}
   // here f_mount == FR_OK -> mounting was a success
   else
@@ -307,20 +307,20 @@ int main(void)
 	  // f_mkfs
 	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
       	    {
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-  				  HAL_Delay (300);
-  				  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-  				  HAL_Delay (1000);
+		  	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+		  	  HAL_Delay (30000);
+		  	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
       	    }
 	  else
       		{
+		  hsd1.Init.ClockDiv = 0;
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-				  HAL_Delay (300);
-				  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-				  HAL_Delay (1000);
+
+				HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			  HAL_Delay (30000);
+			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 				}
 			else
 				{
@@ -333,10 +333,10 @@ int main(void)
 				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
 				if((byteswritten == 0) || (res != FR_OK))
 					{
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					  HAL_Delay (300);
-					  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					  HAL_Delay (1000);
+
+					HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+				  HAL_Delay (30000);
+				  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 					}
 				else
 					{
@@ -353,10 +353,11 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim17);
   tick = 0;
+  tickGPS = 0;
 
   uint8_t i = 0, ret;
   HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  HAL_Delay (5000);
+  //HAL_Delay (5000);
   HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
   //-[ I2C Bus Scanning ]-
       for(i=1; i<128; i++)
@@ -386,6 +387,7 @@ int main(void)
 	  // GPS
 	  if (data_ready)
 	  {
+		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 		  while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 		  if (rxBuffer == rxBuffer1)
 		  {
@@ -398,7 +400,7 @@ int main(void)
 			  //if(myData.fix == 1) {
 				  //do something with the data
 				  //at ex.
-			  double latitude = myDISABLEData.latitude;
+			  double latitude = myData.latitude;
 			  double longitude = myData.longitude;
 			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
 			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
@@ -450,6 +452,7 @@ int main(void)
 		  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	  }
 
+	  if (tick == 0) {}
 	  //test power monitor
 	  /* i2c2status = HAL_I2C_Master_Transmit(&hi2c2, 0x77<<1, &hello, strlen(hello), 10000);
 	  hexstatus = puthex(i2c2status);
@@ -462,10 +465,11 @@ int main(void)
 	  /* Read temperature and pressure data iteratively based on data ready interrupt */
 	  if (tick == 0)//(((int)rslt == BMP3_OK) && (tick == 0) && ((int)status.intr.drdy == BMP3_ENABLE))
 	  {
+		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
 		  settings.op_mode = BMP3_MODE_FORCED;
-			rslt = bmp3_set_op_mode(&settings, &dev);
-			bmp3_check_rslt("bmp3_set_op_mode", rslt);
+		  rslt = bmp3_set_op_mode(&settings, &dev);
+		  bmp3_check_rslt("bmp3_set_op_mode", rslt);
 		  tick = 10;
 		  /*
 		   * First parameter indicates the type of data to be read
@@ -720,7 +724,7 @@ static void MX_SDMMC1_SD_Init(void)
   hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
   hsd1.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd1.Init.ClockDiv = 0;
+  hsd1.Init.ClockDiv = 199;
   hsd1.Init.Transceiver = SDMMC_TRANSCEIVER_DISABLE;
   /* USER CODE BEGIN SDMMC1_Init 2 */
 
@@ -969,11 +973,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CHG_INT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LORA_DIG0_Pin */
-  GPIO_InitStruct.Pin = LORA_DIG0_Pin;
+  /*Configure GPIO pins : LORA_DIG0_Pin CARD_DETECT_Pin */
+  GPIO_InitStruct.Pin = LORA_DIG0_Pin|CARD_DETECT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(LORA_DIG0_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LORA_RST_Pin LORA_NSS_Pin */
   GPIO_InitStruct.Pin = LORA_RST_Pin|LORA_NSS_Pin;
@@ -987,12 +991,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(OCPFAULT_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : CARD_DETECT_Pin */
-  GPIO_InitStruct.Pin = CARD_DETECT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(CARD_DETECT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED0_Pin LED1_Pin LED2_Pin LED3_Pin */
   GPIO_InitStruct.Pin = LED0_Pin|LED1_Pin|LED2_Pin|LED3_Pin;
