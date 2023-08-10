@@ -264,6 +264,8 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_MspInit(&huart1);
+  HAL_UART_MspInit(&huart2);
 
 	LSM6DSO_IO_t IO;
 	IO.Init = BSP_I2C2_Init;
