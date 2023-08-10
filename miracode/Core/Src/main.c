@@ -320,7 +320,7 @@ int main(void)
 	volatile unsigned tmp;
 
 	// Setting the buffer for UART2 data reading
-	rxBuffer = rxBuffer1;
+	gps_rxBuffer = gps_rxBuffer1;
 	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
 	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
 	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
@@ -339,11 +339,11 @@ int main(void)
 		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
 			{
 			while (CDC_Transmit_FS ("MKFS failed!\n", 13) == USBD_BUSY);
-			hsd1.Init.ClockDiv = 0;
+			//hsd1.Init.ClockDiv = 0;
 			}
 		else
 			{
-			hsd1.Init.ClockDiv = 0;
+			//hsd1.Init.ClockDiv = 0;
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
@@ -409,27 +409,7 @@ int main(void)
 			tickGPS = 10;
 
 
-			if (data_ready)
-			{
-			HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-			while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 
-			if (rxBuffer == rxBuffer1)
-				{
-
-				while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
-				}
-			else
-				{
-				while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
-
-				}
-
-			data_ready ^= 1;
-			send_ready |= 1;
-
-			while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
-			}
 			}*/
 
 		/* Read temperature and pressure data iteratively based on data ready interrupt */
@@ -441,72 +421,27 @@ int main(void)
 			while (CDC_Transmit_FS (SystemTimeBuffer, strlen(SystemTimeBuffer)) == USBD_BUSY);
 			SystemTime++;
 
-			if (data_ready)
-				  {
-					  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-					  while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
-					  if (rxBuffer == rxBuffer1)
-					  {
-						  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			if (gps_data_ready)
+						{
+						HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+						while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 
-						  /*//when enough data is received point it to the parser,
-						  //do it outside of a UART interrupt to avoid overrun errors
-						  nmea_parse(&myData, rxBuffer2);
+						if (gps_rxBuffer == gps_rxBuffer1)
+							{
 
-						  //if(myData.fix == 1) {
-							  //do something with the data
-							  //at ex.
-						  double latitude = myData.latitude;
-						  double longitude = myData.longitude;
-						  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
-						  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
-						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-						  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
-						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+							while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
+							}
+						else
+							{
+							while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
 
-						  //}*/
+							}
 
+						gps_data_ready ^= 1;
+						gps_send_ready |= 1;
 
-						  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
-						  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-
-
-					  }
-					  else
-					  {
-						  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-
-						  /*//when enough data is received point it to the parser,
-						  //do it outside of a UART interrupt to avoid overrun errors
-						  nmea_parse(&myData, rxBuffer1);
-
-						  //if(myData.fix == 1) {
-							  //do something with the data
-							  //at ex.
-						  double latitude = myData.latitude;
-						  double longitude = myData.longitude;
-						  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
-						  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
-						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-						  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
-						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-
-						  //}*/
-
-
-						  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
-						  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-
-
-
-					  }
-
-					  data_ready ^= 1;
-					  send_ready |= 1;
-
-					  while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
-					  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-				  }
+						while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
+						}
 			/*if (data_ready)
 				{
 				data_ready ^= 1;
@@ -542,7 +477,7 @@ int main(void)
 			rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
 			bmp3_check_rslt("bmp3_get_sensor_data", rslt);
 
-			/* NOTE : Read status register again to clear data ready interrupt status */
+			// NOTE : Read status register again to clear data ready interrupt status
 			rslt = bmp3_get_status(&status, &dev);
 			bmp3_check_rslt("bmp3_get_status", rslt);
 
@@ -604,7 +539,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 30;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV20;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)

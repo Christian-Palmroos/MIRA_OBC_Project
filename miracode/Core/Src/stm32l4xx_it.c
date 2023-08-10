@@ -42,12 +42,12 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 uint8_t rchar;
-uint8_t rxBuffer1[RXBUFSIZE];
-uint8_t rxBuffer2[RXBUFSIZE];
-volatile uint8_t *rxBuffer;
-volatile uint8_t rxBufferPos;
-volatile unsigned data_ready;
-volatile unsigned send_ready = 1;
+uint8_t gps_rxBuffer1[gps_RXBUFSIZE];
+uint8_t gps_rxBuffer2[gps_RXBUFSIZE];
+volatile uint8_t *gps_rxBuffer;
+volatile uint8_t gps_rxBufferPos;
+volatile unsigned gps_data_ready;
+volatile unsigned gps_send_ready = 1;
 volatile uint8_t tick;
 volatile uint8_t tickGPS;
 
@@ -232,18 +232,18 @@ void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
     char c = huart2.Instance->RDR;
-    if (rxBufferPos < RXBUFSIZE - 1)
-    	{ rxBuffer[rxBufferPos++] = (uint8_t) c; }
+    if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
+    	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
 
-    if ((c == '\n') && send_ready)// && tickGPS == 0) //(c == '\r') ||
+    if ((c == '\n') && gps_send_ready)// && tickGPS == 0) //(c == '\r') ||
     {
     	//tickGPS = 10;
-		rxBuffer[rxBufferPos] = 0;
-		data_ready |= 1;
-		send_ready ^= 1;
-		rxBufferPos = 0;
-		if (rxBuffer == rxBuffer1) {rxBuffer = rxBuffer2;}
-		else {rxBuffer = rxBuffer1;}
+    	gps_rxBuffer[gps_rxBufferPos] = 0;
+    	gps_data_ready |= 1;
+    	gps_send_ready ^= 1;
+    	gps_rxBufferPos = 0;
+		if (gps_rxBuffer == gps_rxBuffer1) {gps_rxBuffer = gps_rxBuffer2;}
+		else {gps_rxBuffer = gps_rxBuffer1;}
 		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
     }
 

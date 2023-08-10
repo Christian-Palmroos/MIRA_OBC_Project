@@ -37,17 +37,17 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define RXBUFSIZE 800
-extern uint8_t rxBuffer1[RXBUFSIZE];
-extern uint8_t rxBuffer2[RXBUFSIZE];
+#define gps_RXBUFSIZE 800
+extern uint8_t gps_rxBuffer1[gps_RXBUFSIZE];
+extern uint8_t gps_rxBuffer2[gps_RXBUFSIZE];
 
-extern volatile uint8_t *rxBuffer;
-extern volatile uint8_t rxBufferPos;
+extern volatile uint8_t *gps_rxBuffer;
+extern volatile uint8_t gps_rxBufferPos;
 extern volatile uint8_t tick;
 extern volatile uint8_t tickGPS;
 extern volatile uint8_t step;
-extern volatile unsigned data_ready;
-extern volatile unsigned send_ready;
+extern volatile unsigned gps_data_ready;
+extern volatile unsigned gps_send_ready;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
