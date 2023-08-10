@@ -56,7 +56,11 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/stm32l4xx_it.h ../Core/Inc/bmp3.h ../Core/Inc/bmp3_defs.h \
  ../Core/Inc/bmp3_defs.h ../Core/Inc/bmp390_task.h \
  ../Core/Inc/user_define.h ../Core/Inc/common_porting.h \
- ../Core/Inc/nmea_parse.h
+ ../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
+ ../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
+ ../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
+ ../Core/Inc/custom_bus.h ../Core/Inc/custom_conf.h \
+ ../Core/Inc/custom_errno.h ../Core/Inc/nmea_parse.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -124,4 +128,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/bmp390_task.h:
 ../Core/Inc/user_define.h:
 ../Core/Inc/common_porting.h:
+../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
+../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
+../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
+../Core/Inc/custom_bus.h:
+../Core/Inc/custom_conf.h:
+../Core/Inc/custom_errno.h:
 ../Core/Inc/nmea_parse.h:

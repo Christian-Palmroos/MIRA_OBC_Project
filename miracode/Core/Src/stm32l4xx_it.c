@@ -255,7 +255,6 @@ void USART2_IRQHandler(void)
 	//ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
   /* USER CODE END USART2_IRQn 1 */
 }
-
 /**
   * @brief This function handles USB OTG FS global interrupt.
   */

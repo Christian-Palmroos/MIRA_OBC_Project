@@ -33,6 +33,11 @@
 #include "bmp390_task.h"
 #include "common_porting.h"
 
+// Gyro, I2C
+#include "../../Drivers/BSP/Components/lsm6dso/lsm6dso.h"
+#include "../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h"
+#include "custom_bus.h"
+
 //include the library
 #include "nmea_parse.h"
 
@@ -55,7 +60,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-I2C_HandleTypeDef hi2c2;
 
 SD_HandleTypeDef hsd1;
 
@@ -77,7 +81,6 @@ unsigned int hexstatus;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_I2C2_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -181,7 +184,6 @@ int main(void)
 	uint8_t wtext[50] = "STM32 FATFS works great!"; /* File write buffer. */
 	uint8_t rtext[2048];/* File read buffer */
 	uint8_t usberr;
-	//MKFS_PARM fmt_opt = {FM_ANY, 0, 32768, 0, 0};
 
 	// For GPS Module
 	HAL_StatusTypeDef UART2_Rx_STATUS;
@@ -213,6 +215,23 @@ int main(void)
 	uint8_t hello[7] = "Hello!\n";
 	uint8_t Buffer[25] = {0};
 	uint8_t Space[] = " - ";
+
+	// LSM6DSO_Object_t
+	LSM6DSO_Object_t AccObj;
+
+	// Acceleration data for LSM
+	LSM6DSO_Axes_t Acceleration;
+	uint8_t AccelerationBuffer[40] = {0};
+	LSM6DSO_Axes_t AngularVelocity;
+	uint8_t AngularVelocityBuffer[40] = {0};
+	int32_t AccError;
+	int32_t AVError;
+
+	int32_t errcode;
+	double SystemTime;
+	SystemTime = 0;
+	uint8_t SystemTimeBuffer[25] = {0};
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -222,14 +241,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-  // SD reader
-  MX_FATFS_Init();
-
-  //HAL_UART_MspInit(&huart1);
-  //HAL_UART_MspInit(&huart2);
-
-  // This returned 0'\0', even though it's supposed to return either USBD_OK or USBD_FAIL
-//   USBD_TxBuffer_Status = USBD_CDC_SetTxBuffer(&hUsbDeviceFS, USB_TxBuffer_FS, USB_TxBuffer_Length);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -242,7 +253,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-  MX_I2C2_Init();
   MX_SDMMC1_SD_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
@@ -255,72 +265,89 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Interface reference is given as a parameter
-  	 *         For I2C : BMP3_I2C_INTF
-  	 *         For SPI : BMP3_SPI_INTF
-  	 */
-  	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
-  	bmp3_check_rslt("bmp3_interface_init", rslt);
+	LSM6DSO_IO_t IO;
+	IO.Init = BSP_I2C2_Init;
+	IO.DeInit = BSP_I2C2_DeInit;
+	IO.BusType = 0;
+	IO.Address = LSM6DSO_I2C_ADD_L;
+	IO.WriteReg = BSP_I2C2_WriteReg;
+	IO.ReadReg = BSP_I2C2_ReadReg;
+	IO.GetTick = BSP_GetTick;
+	IO.Delay = HAL_Delay;
+  // Setting up LSM6DSO
+  LSM6DSO_RegisterBusIO(&AccObj, &IO);
+  errcode = LSM6DSO_Init(&AccObj);
 
-  	rslt = bmp3_init(&dev);
-  	bmp3_check_rslt("bmp3_init", rslt);
+  if (errcode == 0) {while (CDC_Transmit_FS ("GYRO OK!\n", 9) == USBD_BUSY);}
+  else {while (CDC_Transmit_FS ("GYRO NOT OK!\n", 13) == USBD_BUSY);}
 
-  	settings.int_settings.drdy_en = BMP3_DISABLE;
-  	settings.int_settings.latch = BMP3_ENABLE;
-  	settings.press_en = BMP3_ENABLE;
-  	settings.temp_en = BMP3_ENABLE;
+	// Enabling translational and angular acceleration measurements
+	LSM6DSO_ACC_Enable(&AccObj);
+	LSM6DSO_GYRO_Enable(&AccObj);
 
-  	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
-  	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
-  	settings.odr_filter.odr = BMP3_ODR_100_HZ;
+	/* Interface reference is given as a parameter
+	 *         For I2C : BMP3_I2C_INTF
+	 *         For SPI : BMP3_SPI_INTF
+	 */
+	rslt = bmp3_interface_init(&dev, BMP3_I2C_INTF);
+	bmp3_check_rslt("bmp3_interface_init", rslt);
 
-  	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
-  				   BMP3_SEL_DRDY_EN;
+	rslt = bmp3_init(&dev);
+	bmp3_check_rslt("bmp3_init", rslt);
 
-  	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
-  	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
+	settings.int_settings.drdy_en = BMP3_DISABLE;
+	settings.int_settings.latch = BMP3_ENABLE;
+	settings.press_en = BMP3_ENABLE;
+	settings.temp_en = BMP3_ENABLE;
 
-  	/*settings.op_mode = BMP3_MODE_NORMAL;
-  	rslt = bmp3_set_op_mode(&settings, &dev);
-  	bmp3_check_rslt("bmp3_set_op_mode", rslt);*/
+	settings.odr_filter.press_os = BMP3_OVERSAMPLING_4X;
+	settings.odr_filter.temp_os = BMP3_NO_OVERSAMPLING;
+	settings.odr_filter.odr = BMP3_ODR_100_HZ;
 
-  volatile unsigned tmp;
+	settings_sel = BMP3_SEL_PRESS_EN | BMP3_SEL_TEMP_EN | BMP3_SEL_PRESS_OS | BMP3_SEL_TEMP_OS | BMP3_SEL_ODR |
+				   BMP3_SEL_DRDY_EN;
 
-  // Setting the buffer for UART2 data reading
-  rxBuffer = rxBuffer1;
-  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
-  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
-  ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
+	rslt = bmp3_set_sensor_settings(settings_sel, &settings, &dev);
+	bmp3_check_rslt("bmp3_set_sensor_settings", rslt);
+
+	if (rslt == 0) {while (CDC_Transmit_FS ("BMP OK!\n", 8) == USBD_BUSY);}
+	else {while (CDC_Transmit_FS ("BMP NOT OK!\n", 12) == USBD_BUSY);}
+
+	/*settings.op_mode = BMP3_MODE_NORMAL;
+	rslt = bmp3_set_op_mode(&settings, &dev);
+	bmp3_check_rslt("bmp3_set_op_mode", rslt);*/
+
+	volatile unsigned tmp;
+
+	// Setting the buffer for UART2 data reading
+	rxBuffer = rxBuffer1;
+	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
+	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
+	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
-  HAL_Delay (5000);
-  // If not FR_OK, mounting failed, else it was successful
-  if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
-      	{
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  HAL_Delay (30000);
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-      	}
-  // here f_mount == FR_OK -> mounting was a success
-  else
-      	{
-	  // f_mkfs
-	  if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
-      	    {
-		  	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-		  	  HAL_Delay (30000);
-		  	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-      	    }
-	  else
-      		{
-		  hsd1.Init.ClockDiv = 0;
+	//HAL_Delay (5000);
+	// If not FR_OK, mounting failed, else it was successful
+	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
+		{
+		while (CDC_Transmit_FS ("Mount failed!\n", 14) == USBD_BUSY);
+		}
+	// here f_mount == FR_OK -> mounting was a success
+	else
+		{
+		// f_mkfs
+		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
+			{
+			while (CDC_Transmit_FS ("MKFS failed!\n", 13) == USBD_BUSY);
+			hsd1.Init.ClockDiv = 0;
+			}
+		else
+			{
+			hsd1.Init.ClockDiv = 0;
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
-
-				HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-			  HAL_Delay (30000);
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+				while (CDC_Transmit_FS ("Open file failed!\n", 18) == USBD_BUSY);
 				}
 			else
 				{
@@ -328,19 +355,14 @@ int main(void)
 				// Write to the text file
 				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
 				f_read(&SDFile, &rtext, 100, &bytesread);
-				//f_read();
 
 				usberr = CDC_Transmit_FS(rtext,  sizeof(rtext));
 				if((byteswritten == 0) || (res != FR_OK))
 					{
-
-					HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-				  HAL_Delay (30000);
-				  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					while (CDC_Transmit_FS ("Read/Write failed!\n", 19) == USBD_BUSY);
 					}
 				else
 					{
-
 					f_close(&SDFile);
 					}
 
@@ -351,193 +373,208 @@ int main(void)
 
 
 
-  HAL_TIM_Base_Start_IT(&htim17);
-  tick = 0;
-  tickGPS = 0;
+	HAL_TIM_Base_Start_IT(&htim17);
+	tick = 0;
+	tickGPS = 0;
 
-  uint8_t i = 0, ret;
-  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  //HAL_Delay (5000);
-  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-  //-[ I2C Bus Scanning ]-
-      for(i=1; i<128; i++)
-      {
-          ret = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 3, 5);
-          if (ret != HAL_OK) // No ACK Received At That Address
-          {
-        	  while (CDC_Transmit_FS (Space, strlen(Space)) == USBD_BUSY);
-          }
-          else if(ret == HAL_OK)
-          {
-              sprintf(Buffer, "0x%X", i);
-              while (CDC_Transmit_FS (Buffer, strlen(Buffer)) == USBD_BUSY);
-          }
-      }
-      //--[ Scanning Done ]--
+
+	//-[ I2C Bus Scanning ]-
+	uint8_t i = 0, ret;
+	for(i = 1; i < 128; i++)
+		{
+		ret = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 3, 5);
+		if (ret != HAL_OK) // No ACK Received At That Address
+			{
+			while (CDC_Transmit_FS (Space, strlen(Space)) == USBD_BUSY);
+			}
+		else if(ret == HAL_OK)
+			{
+			sprintf(Buffer, "0x%X", i);
+			while (CDC_Transmit_FS (Buffer, strlen(Buffer)) == USBD_BUSY);
+			}
+		}
+	while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+	//--[ Scanning Done ]--
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+	while (1)
+		{
 
-	  // Lesson learned: do NOT place delays between data transfers and receives; it will mess up the data flow
-
-	  // GPS
-	  if (data_ready)
-	  {
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
-		  if (rxBuffer == rxBuffer1)
-		  {
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-
-			  /*//when enough data is received point it to the parser,
-			  //do it outside of a UART interrupt to avoid overrun errors
-			  nmea_parse(&myData, rxBuffer2);
-
-			  //if(myData.fix == 1) {
-				  //do something with the data
-				  //at ex.
-			  double latitude = myData.latitude;
-			  double longitude = myData.longitude;
-			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
-			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
-			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-			  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
-			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-
-			  //}*/
+		// GPS
+		/*if (tickGPS == 0)
+			{
+			tickGPS = 10;
 
 
-			  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
-			  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+			if (data_ready)
+			{
+			HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+			while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
+
+			if (rxBuffer == rxBuffer1)
+				{
+
+				while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
+				}
+			else
+				{
+				while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
+
+				}
+
+			data_ready ^= 1;
+			send_ready |= 1;
+
+			while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
+			}
+			}*/
+
+		/* Read temperature and pressure data iteratively based on data ready interrupt */
+		if (tick == 0)
+			{
+			tick = 10;
+
+			sprintf(SystemTimeBuffer, "time: %.0f s \n", SystemTime);
+			while (CDC_Transmit_FS (SystemTimeBuffer, strlen(SystemTimeBuffer)) == USBD_BUSY);
+			SystemTime++;
+
+			if (data_ready)
+				  {
+					  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+					  while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
+					  if (rxBuffer == rxBuffer1)
+					  {
+						  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
+						  /*//when enough data is received point it to the parser,
+						  //do it outside of a UART interrupt to avoid overrun errors
+						  nmea_parse(&myData, rxBuffer2);
+
+						  //if(myData.fix == 1) {
+							  //do something with the data
+							  //at ex.
+						  double latitude = myData.latitude;
+						  double longitude = myData.longitude;
+						  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
+						  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
+						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+						  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
+						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+						  //}*/
 
 
-		  }
-		  else
-		  {
-			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-
-			  /*//when enough data is received point it to the parser,
-			  //do it outside of a UART interrupt to avoid overrun errors
-			  nmea_parse(&myData, rxBuffer1);
-
-			  //if(myData.fix == 1) {
-				  //do something with the data
-				  //at ex.
-			  double latitude = myData.latitude;
-			  double longitude = myData.longitude;
-			  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
-			  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
-			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-			  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
-			  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-
-			  //}*/
+						  while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
+						  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 
-			  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
-			  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					  }
+					  else
+					  {
+						  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+
+						  /*//when enough data is received point it to the parser,
+						  //do it outside of a UART interrupt to avoid overrun errors
+						  nmea_parse(&myData, rxBuffer1);
+
+						  //if(myData.fix == 1) {
+							  //do something with the data
+							  //at ex.
+						  double latitude = myData.latitude;
+						  double longitude = myData.longitude;
+						  while (CDC_Transmit_FS ("Latitude and longitude:\n", 24) == USBD_BUSY);
+						  while (CDC_Transmit_FS ((uint8_t)latitude, strlen((uint8_t)latitude)) == USBD_BUSY);
+						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+						  while (CDC_Transmit_FS ((uint8_t)longitude, strlen((uint8_t)longitude)) == USBD_BUSY);
+						  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+
+						  //}*/
+
+
+						  while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
+						  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 
 
 
-		  }
+					  }
 
-		  data_ready ^= 1;
-		  send_ready |= 1;
+					  data_ready ^= 1;
+					  send_ready |= 1;
 
-		  while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
-		  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-	  }
+					  while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
+					  // while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+				  }
+			/*if (data_ready)
+				{
+				data_ready ^= 1;
+				send_ready |= 1;
 
-	  if (tick == 0) {}
-	  //test power monitor
-	  /* i2c2status = HAL_I2C_Master_Transmit(&hi2c2, 0x77<<1, &hello, strlen(hello), 10000);
-	  hexstatus = puthex(i2c2status);
-	  while (CDC_Transmit_FS(output, strlen(output)) == USBD_BUSY);
-	  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY); */
+				HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+				while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 
-	  //rslt = bmp3_get_status(&status, &dev);
-	  //bmp3_check_rslt("bmp3_get_status", rslt);
+				if (rxBuffer == rxBuffer1)
+					{
+					while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
+					}
+				else
+					{
+					while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
+					}
 
-	  /* Read temperature and pressure data iteratively based on data ready interrupt */
-	  if (tick == 0)//(((int)rslt == BMP3_OK) && (tick == 0) && ((int)status.intr.drdy == BMP3_ENABLE))
-	  {
-		  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+				while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
+				}*/
 
-		  settings.op_mode = BMP3_MODE_FORCED;
-		  rslt = bmp3_set_op_mode(&settings, &dev);
-		  bmp3_check_rslt("bmp3_set_op_mode", rslt);
-		  tick = 10;
-		  /*
-		   * First parameter indicates the type of data to be read
-		   * BMP3_PRESS_TEMP : To read pressure and temperature data
-		   * BMP3_TEMP       : To read only temperature data
-		   * BMP3_PRESS      : To read only pressure data
-		   */
-		  rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
-		  bmp3_check_rslt("bmp3_get_sensor_data", rslt);
+			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
-		  /* NOTE : Read status register again to clear data ready interrupt status */
-		  rslt = bmp3_get_status(&status, &dev);
-		  bmp3_check_rslt("bmp3_get_status", rslt);
+			settings.op_mode = BMP3_MODE_FORCED;
+			rslt = bmp3_set_op_mode(&settings, &dev);
+			bmp3_check_rslt("bmp3_set_op_mode", rslt);
 
+			/*
+			* First parameter indicates the type of data to be read
+			* BMP3_PRESS_TEMP : To read pressure and temperature data
+			* BMP3_TEMP       : To read only temperature data
+			* BMP3_PRESS      : To read only pressure data
+			*/
+			rslt = bmp3_get_sensor_data(BMP3_PRESS_TEMP, &bmpdata, &dev);
+			bmp3_check_rslt("bmp3_get_sensor_data", rslt);
 
-		  //#ifdef BMP3_FLOAT_COMPENSATION
-		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+			/* NOTE : Read status register again to clear data ready interrupt status */
+			rslt = bmp3_get_status(&status, &dev);
+			bmp3_check_rslt("bmp3_get_status", rslt);
 
-		  while (CDC_Transmit_FS ("BMP390 START\n", 13) == USBD_BUSY);
-		  sprintf(TempBuffer, "%.2f\n", bmpdata.temperature);
-		  sprintf(PresBuffer, "%.2f\n", bmpdata.pressure);
-		  while (CDC_Transmit_FS (TempBuffer, strlen(TempBuffer)) == USBD_BUSY);
-		  while (CDC_Transmit_FS (PresBuffer, strlen(PresBuffer)) == USBD_BUSY);
-		  while (CDC_Transmit_FS ("BMP390 END\n", 11) == USBD_BUSY);
-		  while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-	  }
+			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+			while (CDC_Transmit_FS ("BMP390 START\n", 13) == USBD_BUSY);
+			sprintf(TempBuffer, "%.2f\n", bmpdata.temperature);
+			sprintf(PresBuffer, "%.2f\n", bmpdata.pressure);
+			while (CDC_Transmit_FS (TempBuffer, strlen(TempBuffer)) == USBD_BUSY);
+			while (CDC_Transmit_FS (PresBuffer, strlen(PresBuffer)) == USBD_BUSY);
+			while (CDC_Transmit_FS ("BMP390 END\n", 11) == USBD_BUSY);
+			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
+			//Read gyro data
+			AccError = LSM6DSO_ACC_GetAxes (&AccObj, &Acceleration);
+			AVError = LSM6DSO_GYRO_GetAxes (&AccObj, &AngularVelocity);
+			while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
+			while (CDC_Transmit_FS (AccError, strlen(AccError)) == USBD_BUSY);
+			while (CDC_Transmit_FS (AVError, strlen(AVError)) == USBD_BUSY);
+			sprintf(AccelerationBuffer, "%.10f   %.10f   %.10f\n", Acceleration.x, Acceleration.y, Acceleration.z);
+			while (CDC_Transmit_FS (AccelerationBuffer, strlen(AccelerationBuffer)) == USBD_BUSY);
+			sprintf(AngularVelocityBuffer, "%.10f   %.10f   %.10f\n", AngularVelocity.x, AngularVelocity.y, AngularVelocity.z);
+			while (CDC_Transmit_FS (AngularVelocityBuffer, strlen(AngularVelocityBuffer)) == USBD_BUSY);
 
-	  // This returns HAL_TIMEOUT ???
-	  // UART2_Rx_STATUS = HAL_UART_Receive (&huart2, UART2_RxBuffer, sizeof(UART2_RxBuffer), 5000);
-	  // UART2_Rx_STATUS = HAL_BUSY;
+			while (CDC_Transmit_FS ("GYRO END\n", 9) == USBD_BUSY);
+			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
-	  // Transmit should be handled through the USB port
-	  /*
-	  if(UART2_Rx_STATUS == HAL_OK)
-	  	  {
-		  // HAL_UART_Transmit (&huart1, UART2_rxBuffer, sizeof(UART2_rxBuffer), 5000);
-		  // HAL_UART_Transmit (&huart1, "b \n", 3, 5000);
-
-		  CDC_Transmit_FS ("b \n", 3);
-
-		  // Flash LED1 twice
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (100);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  	  }
-	  else
-	  	  {
-
-		  // Flash LED4 twice
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (100);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  HAL_Delay (200);
-		  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		  }
-		*/
+			}
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -567,7 +604,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 30;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV20;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -653,54 +690,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief I2C2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C2_Init(void)
-{
-
-  /* USER CODE BEGIN I2C2_Init 0 */
-
-  /* USER CODE END I2C2_Init 0 */
-
-  /* USER CODE BEGIN I2C2_Init 1 */
-
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x307075B1;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C2_Init 2 */
-
-  /* USER CODE END I2C2_Init 2 */
 
 }
 
