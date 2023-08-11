@@ -1,5 +1,5 @@
-lsm6dso_reg.c:49:16:lsm6dso_read_reg	1
-lsm6dso_reg.c:70:16:lsm6dso_write_reg	1
+lsm6dso_reg.c:49:9:lsm6dso_read_reg	1
+lsm6dso_reg.c:70:9:lsm6dso_write_reg	1
 lsm6dso_reg.c:93:13:bytecpy	3
 lsm6dso_reg.c:107:9:lsm6dso_from_fs2_to_mg	1
 lsm6dso_reg.c:112:9:lsm6dso_from_fs4_to_mg	1

@@ -1,5 +1,0 @@
-../Core/Src/common_porting.c:93:6:HAL_GPIO_EXTI_Callback	8	static
-../Core/Src/common_porting.c:120:6:DelayUs	0	static
-../Core/Src/common_porting.c:133:6:bmp3_delay_us	0	static
-../Core/Src/common_porting.c:193:8:SensorAPI_I2Cx_Read	40	static
-../Core/Src/common_porting.c:204:8:SensorAPI_I2Cx_Write	24	static

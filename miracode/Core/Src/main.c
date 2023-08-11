@@ -221,10 +221,10 @@ int main(void)
 	LSM6DSO_Object_t AccObj;
 
 	// Acceleration data for LSM
-	volatile LSM6DSO_Axes_t Acceleration;
-	volatile uint8_t AccelerationBuffer[40] = {0};
-	volatile LSM6DSO_Axes_t AngularVelocity;
-	volatile uint8_t AngularVelocityBuffer[40] = {0};
+	LSM6DSO_Axes_t Acceleration;
+	uint8_t AccelerationBuffer[40] = {0};
+	LSM6DSO_Axes_t AngularVelocity;
+	uint8_t AngularVelocityBuffer[40] = {0};
 	int32_t AccError;
 	int32_t AVError;
 	uint8_t GyroErrBuff[25] = {0};
@@ -290,7 +290,9 @@ int main(void)
 	// Enabling translational and angular acceleration measurements
 	LSM6DSO_ACC_Enable(&AccObj);
 	LSM6DSO_GYRO_Enable(&AccObj);
-
+	LSM6DSO_ACC_SetOutputDataRate(&AccObj, 104.0f);
+	LSM6DSO_GYRO_SetOutputDataRate(&AccObj, 104.0f);
+	//LSM6DSO_FIFO_Set_Mode(&AccObj, (uint8_t)3);
 	/* Interface reference is given as a parameter
 	 *         For I2C : BMP3_I2C_INTF
 	 *         For SPI : BMP3_SPI_INTF
@@ -452,9 +454,6 @@ int main(void)
 			AccError = LSM6DSO_ACC_GetAxes (&AccObj, &Acceleration);
 			AVError = LSM6DSO_GYRO_GetAxes (&AccObj, &AngularVelocity);
 
-			sprintf(GyroErrBuff, "%"PRId32"   %"PRId32"\n", AccError, AVError);
-
-			while (CDC_Transmit_FS (GyroErrBuff, strlen(GyroErrBuff)) == USBD_BUSY);
 			while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
 
 			sprintf(AccelerationBuffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", Acceleration.x, Acceleration.y, Acceleration.z);
