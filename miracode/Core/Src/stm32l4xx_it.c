@@ -231,13 +231,14 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
+
     char c = huart2.Instance->RDR;
     if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
     	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
 
-    if ((c == '\n') && gps_send_ready)// && tickGPS == 0) //(c == '\r') ||
+    if ((c == '\n') && (gps_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
     {
-    	//tickGPS = 10;
+    	//tickGPS = 1;
     	gps_rxBuffer[gps_rxBufferPos] = 0;
     	gps_data_ready |= 1;
     	gps_send_ready ^= 1;
@@ -249,12 +250,14 @@ void USART2_IRQHandler(void)
 
     //HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	  //rchar = huart2.Instance->RDR;
+
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 	//ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
   /* USER CODE END USART2_IRQn 1 */
 }
+
 /**
   * @brief This function handles USB OTG FS global interrupt.
   */

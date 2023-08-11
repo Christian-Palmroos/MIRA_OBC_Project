@@ -40,6 +40,7 @@
 
 //include the library
 #include "nmea_parse.h"
+#include <inttypes.h>
 
 /* USER CODE END Includes */
 
@@ -220,12 +221,13 @@ int main(void)
 	LSM6DSO_Object_t AccObj;
 
 	// Acceleration data for LSM
-	LSM6DSO_Axes_t Acceleration;
-	uint8_t AccelerationBuffer[40] = {0};
-	LSM6DSO_Axes_t AngularVelocity;
-	uint8_t AngularVelocityBuffer[40] = {0};
+	volatile LSM6DSO_Axes_t Acceleration;
+	volatile uint8_t AccelerationBuffer[40] = {0};
+	volatile LSM6DSO_Axes_t AngularVelocity;
+	volatile uint8_t AngularVelocityBuffer[40] = {0};
 	int32_t AccError;
 	int32_t AVError;
+	uint8_t GyroErrBuff[25] = {0};
 
 	int32_t errcode;
 	double SystemTime;
@@ -264,6 +266,8 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+  HAL_MspInit();
+  BSP_I2C2_Init();
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
 
@@ -328,7 +332,7 @@ int main(void)
 	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
-	//HAL_Delay (5000);
+
 	// If not FR_OK, mounting failed, else it was successful
 	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
 		{
@@ -341,11 +345,11 @@ int main(void)
 		if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK)
 			{
 			while (CDC_Transmit_FS ("MKFS failed!\n", 13) == USBD_BUSY);
-			//hsd1.Init.ClockDiv = 0;
+			hsd1.Init.ClockDiv = 0;
 			}
 		else
 			{
-			//hsd1.Init.ClockDiv = 0;
+			hsd1.Init.ClockDiv = 0;
 			// Open file for writing (Create)
 			if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 				{
@@ -405,64 +409,16 @@ int main(void)
 	while (1)
 		{
 
-		// GPS
-		/*if (tickGPS == 0)
-			{
-			tickGPS = 10;
-
-
-
-			}*/
 
 		/* Read temperature and pressure data iteratively based on data ready interrupt */
 		if (tick == 0)
 			{
 			tick = 10;
 
-			sprintf(SystemTimeBuffer, "time: %.0f s \n", SystemTime);
+			sprintf(SystemTimeBuffer, "\ntime: %.0f s \n", SystemTime);
 			while (CDC_Transmit_FS (SystemTimeBuffer, strlen(SystemTimeBuffer)) == USBD_BUSY);
 			SystemTime++;
 
-			if (gps_data_ready)
-						{
-						HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-						while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
-
-						if (gps_rxBuffer == gps_rxBuffer1)
-							{
-
-							while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
-							}
-						else
-							{
-							while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
-
-							}
-
-						gps_data_ready ^= 1;
-						gps_send_ready |= 1;
-
-						while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
-						}
-			/*if (data_ready)
-				{
-				data_ready ^= 1;
-				send_ready |= 1;
-
-				HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-				while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
-
-				if (rxBuffer == rxBuffer1)
-					{
-					while (CDC_Transmit_FS (rxBuffer1, strlen(rxBuffer1)) == USBD_BUSY);
-					}
-				else
-					{
-					while (CDC_Transmit_FS (rxBuffer2, strlen(rxBuffer2)) == USBD_BUSY);
-					}
-
-				while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
-				}*/
 
 			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
@@ -495,17 +451,43 @@ int main(void)
 			//Read gyro data
 			AccError = LSM6DSO_ACC_GetAxes (&AccObj, &Acceleration);
 			AVError = LSM6DSO_GYRO_GetAxes (&AccObj, &AngularVelocity);
+
+			sprintf(GyroErrBuff, "%"PRId32"   %"PRId32"\n", AccError, AVError);
+
+			while (CDC_Transmit_FS (GyroErrBuff, strlen(GyroErrBuff)) == USBD_BUSY);
 			while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
-			while (CDC_Transmit_FS (AccError, strlen(AccError)) == USBD_BUSY);
-			while (CDC_Transmit_FS (AVError, strlen(AVError)) == USBD_BUSY);
-			sprintf(AccelerationBuffer, "%.10f   %.10f   %.10f\n", Acceleration.x, Acceleration.y, Acceleration.z);
+
+			sprintf(AccelerationBuffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", Acceleration.x, Acceleration.y, Acceleration.z);
 			while (CDC_Transmit_FS (AccelerationBuffer, strlen(AccelerationBuffer)) == USBD_BUSY);
-			sprintf(AngularVelocityBuffer, "%.10f   %.10f   %.10f\n", AngularVelocity.x, AngularVelocity.y, AngularVelocity.z);
+
+			sprintf(AngularVelocityBuffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", AngularVelocity.x, AngularVelocity.y, AngularVelocity.z);
 			while (CDC_Transmit_FS (AngularVelocityBuffer, strlen(AngularVelocityBuffer)) == USBD_BUSY);
 
 			while (CDC_Transmit_FS ("GYRO END\n", 9) == USBD_BUSY);
 			while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
+			}
+		// GPS
+		if (gps_data_ready)
+			{
+			HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+			//while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
+
+			if (gps_rxBuffer == gps_rxBuffer1)
+				{
+
+				while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
+				}
+			else
+				{
+				while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
+
+				}
+
+			gps_data_ready ^= 1;
+			gps_send_ready |= 1;
+
+			//while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
 			}
 
     /* USER CODE END WHILE */
@@ -541,7 +523,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 30;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV20;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -650,7 +632,7 @@ static void MX_SDMMC1_SD_Init(void)
   hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
   hsd1.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd1.Init.ClockDiv = 199;
+  hsd1.Init.ClockDiv = 0;
   hsd1.Init.Transceiver = SDMMC_TRANSCEIVER_DISABLE;
   /* USER CODE BEGIN SDMMC1_Init 2 */
 
@@ -832,7 +814,8 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT;
+  huart2.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
