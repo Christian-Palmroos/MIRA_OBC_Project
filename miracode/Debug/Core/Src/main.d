@@ -60,7 +60,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
  ../Core/Src/../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
  ../Core/Inc/custom_bus.h ../Core/Inc/custom_conf.h \
- ../Core/Inc/custom_errno.h ../Core/Inc/nmea_parse.h
+ ../Core/Inc/custom_errno.h ../Core/Inc/LoRa.h ../Core/Inc/main.h \
+ ../Core/Inc/SX1278.h ../Core/Inc/SX1278_hw.h ../Core/Inc/nmea_parse.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -134,4 +135,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/custom_bus.h:
 ../Core/Inc/custom_conf.h:
 ../Core/Inc/custom_errno.h:
+../Core/Inc/LoRa.h:
+../Core/Inc/main.h:
+../Core/Inc/SX1278.h:
+../Core/Inc/SX1278_hw.h:
 ../Core/Inc/nmea_parse.h:

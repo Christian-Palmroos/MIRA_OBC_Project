@@ -1,3 +1,6 @@
+"./Core/Src/LoRa.o"
+"./Core/Src/SX1278.o"
+"./Core/Src/SX1278_hw.o"
 "./Core/Src/bmp3.o"
 "./Core/Src/bmp390_task.o"
 "./Core/Src/common_porting.o"

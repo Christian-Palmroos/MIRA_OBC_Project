@@ -38,6 +38,10 @@
 #include "../../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h"
 #include "custom_bus.h"
 
+//LoRa
+#include "LoRa.h"
+#include "SX1278.h"
+
 //include the library
 #include "nmea_parse.h"
 #include <inttypes.h>
@@ -232,6 +236,19 @@ int main(void)
 	LSM6DSO_IO_t gyro_io;
 	//uint8_t GyroErrBuff[25] = {0};
 
+	//LoRa
+	LoRa Radio;
+	char send_data[200];
+	memset(send_data,NULL,200);
+
+//	SX1278_hw_t SX1278_hw;
+//	SX1278_t SX1278;
+//	int master;
+//	//int ret;
+//	char buffer[512];
+//	int message;
+//	int message_length;
+
 	// Time progress tracking using tick
 	double system_time_counter;
 	system_time_counter = 0;
@@ -276,6 +293,84 @@ int main(void)
   //Initialize msp for both uarts
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
+
+  // Run another SPI1 init because?
+  //HAL_SPI_MspInit(&hspi1);
+  //initialize LoRa module
+//  	SX1278_hw.dio0.port = LORA_DIG0_GPIO_Port;
+//  	SX1278_hw.dio0.pin = LORA_DIG0_Pin;
+//  	SX1278_hw.nss.port = LORA0_NSS_GPIO_Port;
+//  	SX1278_hw.nss.pin = LORA0_NSS_Pin;
+//  	SX1278_hw.reset.port = LORA_RST_GPIO_Port;
+//  	SX1278_hw.reset.pin = LORA_RST_Pin;
+//  	SX1278_hw.spi = &hspi1;
+//
+//  	SX1278.hw = &SX1278_hw;
+//
+//  	printf("Configuring LoRa module\r\n");
+//  	SX1278_init(&SX1278, 434000000, SX1278_POWER_17DBM, SX1278_LORA_SF_7,
+//  	SX1278_LORA_BW_125KHZ, SX1278_LORA_CR_4_5, SX1278_LORA_CRC_EN, 10);
+//  	printf("Done configuring LoRaModule\r\n");
+//
+//
+//  	message_length = sprintf(buffer, "Hello %d", message);
+//	if (SX1278_LoRaEntryTx(&SX1278, message_length, 2000) == 0){
+//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//	}
+//	else {
+//		HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+//	}
+//
+//	if (SX1278_LoRaTxPacket(&SX1278, (uint8_t*) buffer,message_length, 2000)){
+//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+//	}
+//	else {
+//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+//	}
+
+
+  Radio = newLoRa();
+
+  Radio.CS_port         = LORA0_NSS_GPIO_Port;
+  Radio.CS_pin          = LORA0_NSS_Pin;
+  Radio.reset_port      = LORA_RST_GPIO_Port;
+  Radio.reset_pin       = LORA_RST_Pin;
+  Radio.DIO0_port       = LORA_DIG0_GPIO_Port;
+  Radio.DIO0_pin        = LORA_DIG0_Pin;
+  Radio.hSPIx           = &hspi1;
+
+  // Setting radio parameters
+  Radio.frequency             = 433;             // default = 433 MHz
+  Radio.spredingFactor        = SF_7;            // default = SF_7
+  Radio.bandWidth             = BW_125KHz;       // default = BW_125KHz
+  Radio.crcRate               = CR_4_5;          // default = CR_4_5
+  Radio.power                 = POWER_20db;      // default = 20db
+  Radio.overCurrentProtection = 100;             // default = 100 mA
+  Radio.preamble              = 8;               // default = 8;
+
+  // Initializing radio
+  LoRa_reset(&Radio);
+  uint16_t LoRa_status = LoRa_init(&Radio);
+
+  /* About overCurrentProtection:
+   * The maximum current must be a multiple of 5 if it is less than 120, and a multiple of 10 if it is greater than 120.
+   * The minimum value is 45 mA and the maximum is 240 mA.
+   */
+
+  // Checking radio status
+  if (LoRa_status==LORA_OK){
+	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  snprintf(send_data,sizeof(send_data),"\n\r LoRa is running... :) \n\r");
+	  LoRa_transmit(&Radio, (uint8_t*)send_data, 120, 100);
+	  // HAL_UART_Transmit(&debugUART, (uint8_t*)send_data, 200, 200);
+  }
+  else{
+	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	  snprintf(send_data,sizeof(send_data),"\n\r LoRa failed :( \n\r Error code: %d \n\r", LoRa_status);
+	  // HAL_UART_Transmit(&debugUART, (uint8_t*)send_data, 200, 200);
+  }
+
+  while(1);
 
   // Set gyro io functions and values
   gyro_io.Init = BSP_I2C2_Init;
@@ -505,9 +600,9 @@ int main(void)
 		//while (CDC_Transmit_FS ("GPS END\n", 8) == USBD_BUSY);
 		}
 
-/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
   /* USER CODE END 3 */
 }
@@ -674,11 +769,11 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
