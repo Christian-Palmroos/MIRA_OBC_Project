@@ -41,6 +41,7 @@
 //LoRa
 #include "LoRa.h"
 #include "SX1278.h"
+#include "lora_sx1276.h"
 
 //include the library
 #include "nmea_parse.h"
@@ -237,9 +238,7 @@ int main(void)
 	//uint8_t GyroErrBuff[25] = {0};
 
 	//LoRa
-	LoRa Radio;
-	char send_data[200];
-	memset(send_data,NULL,200);
+	lora_sx1276 lora;
 
 //	SX1278_hw_t SX1278_hw;
 //	SX1278_t SX1278;
@@ -329,46 +328,19 @@ int main(void)
 //	}
 
 
-  Radio = newLoRa();
-
-  Radio.CS_port         = LORA0_NSS_GPIO_Port;
-  Radio.CS_pin          = LORA0_NSS_Pin;
-  Radio.reset_port      = LORA_RST_GPIO_Port;
-  Radio.reset_pin       = LORA_RST_Pin;
-  Radio.DIO0_port       = LORA_DIG0_GPIO_Port;
-  Radio.DIO0_pin        = LORA_DIG0_Pin;
-  Radio.hSPIx           = &hspi1;
-
-  // Setting radio parameters
-  Radio.frequency             = 433;             // default = 433 MHz
-  Radio.spredingFactor        = SF_7;            // default = SF_7
-  Radio.bandWidth             = BW_125KHz;       // default = BW_125KHz
-  Radio.crcRate               = CR_4_5;          // default = CR_4_5
-  Radio.power                 = POWER_20db;      // default = 20db
-  Radio.overCurrentProtection = 100;             // default = 100 mA
-  Radio.preamble              = 8;               // default = 8;
-
-  // Initializing radio
-  LoRa_reset(&Radio);
-  uint16_t LoRa_status = LoRa_init(&Radio);
-
-  /* About overCurrentProtection:
-   * The maximum current must be a multiple of 5 if it is less than 120, and a multiple of 10 if it is greater than 120.
-   * The minimum value is 45 mA and the maximum is 240 mA.
-   */
+  uint8_t res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
+  if (res != LORA_OK) {
+	  // Initialization failed
+	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	}
+  res = lora_send_packet(&lora, (uint8_t *)"test", 4);
+      if (res != LORA_OK) {
+        // Send failed
+    	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+      }
+	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
   // Checking radio status
-  if (LoRa_status==LORA_OK){
-	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  snprintf(send_data,sizeof(send_data),"\n\r LoRa is running... :) \n\r");
-	  LoRa_transmit(&Radio, (uint8_t*)send_data, 120, 100);
-	  // HAL_UART_Transmit(&debugUART, (uint8_t*)send_data, 200, 200);
-  }
-  else{
-	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	  snprintf(send_data,sizeof(send_data),"\n\r LoRa failed :( \n\r Error code: %d \n\r", LoRa_status);
-	  // HAL_UART_Transmit(&debugUART, (uint8_t*)send_data, 200, 200);
-  }
 
   while(1);
 
