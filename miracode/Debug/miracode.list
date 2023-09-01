@@ -3774,8 +3774,8 @@ static void MX_GPIO_Init(void)
                           |MIRA_EN_PWR_Pin|OCPEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LORA_RST_Pin|LORA_NSS_Pin, GPIO_PIN_RESET);
- 8001dd6:	2200      	movs	r2, #0
+  HAL_GPIO_WritePin(GPIOC, LORA_RST_Pin|LORA_NSS_Pin, GPIO_PIN_SET);
+ 8001dd6:	2201      	movs	r2, #1
  8001dd8:	2130      	movs	r1, #48	; 0x30
  8001dda:	4837      	ldr	r0, [pc, #220]	; (8001eb8 <MX_GPIO_Init+0x194>)
  8001ddc:	f001 f83c 	bl	8002e58 <HAL_GPIO_WritePin>
