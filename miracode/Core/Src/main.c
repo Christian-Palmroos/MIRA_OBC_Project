@@ -496,6 +496,7 @@ int main(void)
 		// Print current time
 		sprintf(system_time_buffer, "\ntime: %.0f s \n", system_time_counter);
 		while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		system_time_counter++;
 
 		// Toggle LED on board to indicate succesful timer management
@@ -523,13 +524,19 @@ int main(void)
 
 		// Print bmp measurements
 		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS ("BMP390 START\n", 13) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		sprintf(bmp_temperature_buffer, "%.2f\n", bmp_data.temperature);
 		sprintf(bmp_pressure_buffer, "%.2f\n", bmp_data.pressure);
 		while (CDC_Transmit_FS (bmp_temperature_buffer, strlen(bmp_temperature_buffer)) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS (bmp_pressure_buffer, strlen(bmp_pressure_buffer)) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS ("BMP390 END\n", 11) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 
 		// Read gyro acceleration and angular velocity data
 		gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
@@ -537,12 +544,17 @@ int main(void)
 
 		// Print gyro measurements
 		while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		sprintf(gyro_acceleration_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_acceleration_object.x, gyro_acceleration_object.y, gyro_acceleration_object.z);
 		while (CDC_Transmit_FS (gyro_acceleration_buffer, strlen(gyro_acceleration_buffer)) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		sprintf(gyro_angularvel_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_angularvel_object.x, gyro_angularvel_object.y, gyro_angularvel_object.z);
 		while (CDC_Transmit_FS (gyro_angularvel_buffer, strlen(gyro_angularvel_buffer)) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS ("GYRO END\n", 9) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 
 		}
 
@@ -558,10 +570,12 @@ int main(void)
 			{
 
 			while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
+			//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 			}
 		else
 			{
 			while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
+			//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 
 			}
 
