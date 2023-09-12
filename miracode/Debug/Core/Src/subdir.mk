@@ -5,45 +5,39 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/LoRa.c \
-../Core/Src/SX1278.c \
-../Core/Src/SX1278_hw.c \
 ../Core/Src/bmp3.c \
 ../Core/Src/bmp390_task.c \
 ../Core/Src/common_porting.c \
 ../Core/Src/custom_bus.c \
 ../Core/Src/lora_sx1276.c \
 ../Core/Src/main.c \
+../Core/Src/mira.c \
 ../Core/Src/nmea_parse.c \
 ../Core/Src/stm32l4xx_hal_msp.c \
 ../Core/Src/stm32l4xx_it.c \
 ../Core/Src/system_stm32l4xx.c 
 
 OBJS += \
-./Core/Src/LoRa.o \
-./Core/Src/SX1278.o \
-./Core/Src/SX1278_hw.o \
 ./Core/Src/bmp3.o \
 ./Core/Src/bmp390_task.o \
 ./Core/Src/common_porting.o \
 ./Core/Src/custom_bus.o \
 ./Core/Src/lora_sx1276.o \
 ./Core/Src/main.o \
+./Core/Src/mira.o \
 ./Core/Src/nmea_parse.o \
 ./Core/Src/stm32l4xx_hal_msp.o \
 ./Core/Src/stm32l4xx_it.o \
 ./Core/Src/system_stm32l4xx.o 
 
 C_DEPS += \
-./Core/Src/LoRa.d \
-./Core/Src/SX1278.d \
-./Core/Src/SX1278_hw.d \
 ./Core/Src/bmp3.d \
 ./Core/Src/bmp390_task.d \
 ./Core/Src/common_porting.d \
 ./Core/Src/custom_bus.d \
 ./Core/Src/lora_sx1276.d \
 ./Core/Src/main.d \
+./Core/Src/mira.d \
 ./Core/Src/nmea_parse.d \
 ./Core/Src/stm32l4xx_hal_msp.d \
 ./Core/Src/stm32l4xx_it.d \
@@ -57,7 +51,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/LoRa.cyclo ./Core/Src/LoRa.d ./Core/Src/LoRa.o ./Core/Src/LoRa.su ./Core/Src/SX1278.cyclo ./Core/Src/SX1278.d ./Core/Src/SX1278.o ./Core/Src/SX1278.su ./Core/Src/SX1278_hw.cyclo ./Core/Src/SX1278_hw.d ./Core/Src/SX1278_hw.o ./Core/Src/SX1278_hw.su ./Core/Src/bmp3.cyclo ./Core/Src/bmp3.d ./Core/Src/bmp3.o ./Core/Src/bmp3.su ./Core/Src/bmp390_task.cyclo ./Core/Src/bmp390_task.d ./Core/Src/bmp390_task.o ./Core/Src/bmp390_task.su ./Core/Src/common_porting.cyclo ./Core/Src/common_porting.d ./Core/Src/common_porting.o ./Core/Src/common_porting.su ./Core/Src/custom_bus.cyclo ./Core/Src/custom_bus.d ./Core/Src/custom_bus.o ./Core/Src/custom_bus.su ./Core/Src/lora_sx1276.cyclo ./Core/Src/lora_sx1276.d ./Core/Src/lora_sx1276.o ./Core/Src/lora_sx1276.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/nmea_parse.cyclo ./Core/Src/nmea_parse.d ./Core/Src/nmea_parse.o ./Core/Src/nmea_parse.su ./Core/Src/stm32l4xx_hal_msp.cyclo ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.cyclo ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/system_stm32l4xx.cyclo ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
+	-$(RM) ./Core/Src/bmp3.cyclo ./Core/Src/bmp3.d ./Core/Src/bmp3.o ./Core/Src/bmp3.su ./Core/Src/bmp390_task.cyclo ./Core/Src/bmp390_task.d ./Core/Src/bmp390_task.o ./Core/Src/bmp390_task.su ./Core/Src/common_porting.cyclo ./Core/Src/common_porting.d ./Core/Src/common_porting.o ./Core/Src/common_porting.su ./Core/Src/custom_bus.cyclo ./Core/Src/custom_bus.d ./Core/Src/custom_bus.o ./Core/Src/custom_bus.su ./Core/Src/lora_sx1276.cyclo ./Core/Src/lora_sx1276.d ./Core/Src/lora_sx1276.o ./Core/Src/lora_sx1276.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/mira.cyclo ./Core/Src/mira.d ./Core/Src/mira.o ./Core/Src/mira.su ./Core/Src/nmea_parse.cyclo ./Core/Src/nmea_parse.d ./Core/Src/nmea_parse.o ./Core/Src/nmea_parse.su ./Core/Src/stm32l4xx_hal_msp.cyclo ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.cyclo ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/system_stm32l4xx.cyclo ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
 
 .PHONY: clean-Core-2f-Src
 

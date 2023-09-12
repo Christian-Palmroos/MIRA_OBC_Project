@@ -27,27 +27,27 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  00030354  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00047511  00000000  00000000  00030384  2**0
+ 12 .debug_info   00047463  00000000  00000000  00030384  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 000067da  00000000  00000000  00077895  2**0
+ 13 .debug_abbrev 000067da  00000000  00000000  000777e7  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00003590  00000000  00000000  0007e070  2**3
+ 14 .debug_aranges 00003590  00000000  00000000  0007dfc8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00003320  00000000  00000000  00081600  2**3
+ 15 .debug_ranges 00003320  00000000  00000000  00081558  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0000b7e7  00000000  00000000  00084920  2**0
+ 16 .debug_macro  00035516  00000000  00000000  00084878  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0003b83e  00000000  00000000  00090107  2**0
+ 17 .debug_line   0003b80c  00000000  00000000  000b9d8e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0012ac3b  00000000  00000000  000cb945  2**0
+ 18 .debug_str    00129e1d  00000000  00000000  000f559a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  001f6580  2**0
+ 19 .comment      00000050  00000000  00000000  0021f3b7  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  0000fa3c  00000000  00000000  001f65d0  2**2
+ 20 .debug_frame  0000fa3c  00000000  00000000  0021f408  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .stab         000000cc  00000000  00000000  0020600c  2**2
+ 21 .stab         000000cc  00000000  00000000  0022ee44  2**2
                   CONTENTS, READONLY, DEBUGGING
- 22 .stabstr      000001b9  00000000  00000000  002060d8  2**0
+ 22 .stabstr      000001b9  00000000  00000000  0022ef10  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -7464,9 +7464,6 @@ int main(void)
   HAL_UART_MspInit(&huart2);
  80035b8:	487c      	ldr	r0, [pc, #496]	; (80037ac <main+0x354>)
  80035ba:	f001 f9b9 	bl	8004930 <HAL_UART_MspInit>
-//	else {
-//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-//	}
 
 
   uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
@@ -8090,6 +8087,7 @@ __STATIC_FORCEINLINE uint32_t __STREXW(uint32_t value, volatile uint32_t *addr)
  8003ad6:	220a      	movs	r2, #10
  8003ad8:	701a      	strb	r2, [r3, #0]
 
+		//----------------------------------------------------------------------------------------------------------------------
 		// Print current time
 		sprintf(system_time_buffer, "\ntime: %.0f s \n", system_time_counter);
  8003ada:	4638      	mov	r0, r7
@@ -8157,6 +8155,7 @@ __STATIC_FORCEINLINE uint32_t __STREXW(uint32_t value, volatile uint32_t *addr)
  8003b66:	48a0      	ldr	r0, [pc, #640]	; (8003de8 <main+0x990>)
  8003b68:	f003 faec 	bl	8007144 <HAL_GPIO_TogglePin>
 
+		//----------------------------------------------------------------------------------------------------------------------
 		// bmp needed to be forced for this kind of data reading, as now FIFO buffers or dready interrupts are being used
 		bmp_settings.op_mode = BMP3_MODE_FORCED;
  8003b6c:	f507 632d 	add.w	r3, r7, #2768	; 0xad0
@@ -8353,7 +8352,7 @@ __STATIC_FORCEINLINE uint32_t __STREXW(uint32_t value, volatile uint32_t *addr)
  8003d30:	4618      	mov	r0, r3
  8003d32:	f7ff fb12 	bl	800335a <lora_send_packet>
 		}
-
+		//----------------------------------------------------------------------------------------------------------------------
 		// Read gyro acceleration and angular velocity data
 		gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
  8003d36:	f107 02b0 	add.w	r2, r7, #176	; 0xb0
@@ -8545,7 +8544,7 @@ __STATIC_FORCEINLINE uint32_t __STREXW(uint32_t value, volatile uint32_t *addr)
  8003f1e:	493e      	ldr	r1, [pc, #248]	; (8004018 <main+0xbc0>)
  8003f20:	4618      	mov	r0, r3
  8003f22:	f7ff fa1a 	bl	800335a <lora_send_packet>
-
+//		}
 
 		}
 
