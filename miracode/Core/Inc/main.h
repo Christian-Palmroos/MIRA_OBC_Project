@@ -73,8 +73,6 @@ void Error_Handler(void);
 #define GPS_TX_GPIO_Port GPIOA
 #define GPS_RX_Pin GPIO_PIN_3
 #define GPS_RX_GPIO_Port GPIOA
-#define LORA0_NSS_Pin GPIO_PIN_4
-#define LORA0_NSS_GPIO_Port GPIOA
 #define LORA0_SCK_Pin GPIO_PIN_5
 #define LORA0_SCK_GPIO_Port GPIOA
 #define LORA0_MISO_Pin GPIO_PIN_6

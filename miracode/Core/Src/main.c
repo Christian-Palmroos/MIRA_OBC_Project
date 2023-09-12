@@ -192,6 +192,7 @@ int main(void)
 	UINT sd_err_byteswritten, sd_err_bytesread; /* File write/read counts */
 	uint8_t sd_write_buffer[50] = "STM32 FATFS works great!"; /* File write buffer. */
 	uint8_t sd_read_buffer[2048];/* File read buffer */
+	FRESULT sd_status;
 
 	// For GPS Module
 	//HAL_StatusTypeDef UART2_Rx_STATUS;
@@ -328,21 +329,17 @@ int main(void)
 //	}
 
 
-  uint8_t res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
-  if (res != LORA_OK) {
+  uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
+  if (lora_res != LORA_OK) {
 	  // Initialization failed
 	  HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	  while(1);
 	}
-  res = lora_send_packet(&lora, (uint8_t *)"test", 4);
-      if (res != LORA_OK) {
-        // Send failed
-    	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-      }
-	  HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-
-  // Checking radio status
-
-  while(1);
+//  lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
+//      if (lora_res != LORA_OK) {
+//        // Send failed
+//    	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//      }
 
   // Set gyro io functions and values
   gyro_io.Init = BSP_I2C2_Init;
@@ -496,7 +493,14 @@ int main(void)
 		// Print current time
 		sprintf(system_time_buffer, "\ntime: %.0f s \n", system_time_counter);
 		while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		//write current time to SD
+		if (sd_status == FR_OK){
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		}
+		// Send current time to LORA
+		if (lora_res == LORA_OK) {
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+		}
 		system_time_counter++;
 
 		// Toggle LED on board to indicate succesful timer management
@@ -522,39 +526,61 @@ int main(void)
 		bmp_result = bmp3_get_status(&bmp_status, &bmp_device);
 		bmp3_check_rslt("bmp3_get_status", bmp_result);
 
+
 		// Print bmp measurements
-		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		while (CDC_Transmit_FS ("BMP390 START\n", 13) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		sprintf(bmp_temperature_buffer, "%.2f\n", bmp_data.temperature);
 		sprintf(bmp_pressure_buffer, "%.2f\n", bmp_data.pressure);
+
+		while (CDC_Transmit_FS ("\nBMP390 END\n", 12) == USBD_BUSY);
 		while (CDC_Transmit_FS (bmp_temperature_buffer, strlen(bmp_temperature_buffer)) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
 		while (CDC_Transmit_FS (bmp_pressure_buffer, strlen(bmp_pressure_buffer)) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		while (CDC_Transmit_FS ("BMP390 END\n", 11) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		while (CDC_Transmit_FS ("BMP390 END\n\n", 12) == USBD_BUSY);
+
+		// Write bmp to SD
+		if (sd_status == FR_OK){
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		}
+
+		// Send bmp data to LORA
+		if (lora_res == LORA_OK) {
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+		}
 
 		// Read gyro acceleration and angular velocity data
 		gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
 		gyro_result_angularvel = LSM6DSO_GYRO_GetAxes (&gyro_device, &gyro_angularvel_object);
 
+		sprintf(gyro_acceleration_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_acceleration_object.x, gyro_acceleration_object.y, gyro_acceleration_object.z);
+		sprintf(gyro_angularvel_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_angularvel_object.x, gyro_angularvel_object.y, gyro_angularvel_object.z);
+
 		// Print gyro measurements
 		while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		sprintf(gyro_acceleration_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_acceleration_object.x, gyro_acceleration_object.y, gyro_acceleration_object.z);
 		while (CDC_Transmit_FS (gyro_acceleration_buffer, strlen(gyro_acceleration_buffer)) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		sprintf(gyro_angularvel_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_angularvel_object.x, gyro_angularvel_object.y, gyro_angularvel_object.z);
 		while (CDC_Transmit_FS (gyro_angularvel_buffer, strlen(gyro_angularvel_buffer)) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		while (CDC_Transmit_FS ("GYRO END\n", 9) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
-		//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		while (CDC_Transmit_FS ("GYRO END\n\n", 10) == USBD_BUSY);
+
+		// Write gyro to SD
+		if (sd_status == FR_OK){
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+		}
+
+		// Send gyro data to LORA
+		if (lora_res == LORA_OK) {
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+			lora_send_packet(&lora, (uint8_t *)"test", 4);
+		}
+
 
 		}
 
@@ -568,14 +594,30 @@ int main(void)
 		// Choose the buffer from the two data buffers that is nit currently being written into
 		if (gps_rxBuffer == gps_rxBuffer1)
 			{
-
+			// print gps data
 			while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
-			//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			//write gps data to SD
+			if (sd_status == FR_OK){
+				sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			}
+			// Sendgps data to LORA
+			if (lora_res == LORA_OK) {
+				lora_send_packet(&lora, (uint8_t *)"test", 4);
+			}
+
 			}
 		else
 			{
+			// print gps data
 			while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
-			//sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			//write gps data to SD
+			if (sd_status == FR_OK){
+				sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+			}
+			// Sendgps data to LORA
+			if (lora_res == LORA_OK) {
+				lora_send_packet(&lora, (uint8_t *)"test", 4);
+			}
 
 			}
 

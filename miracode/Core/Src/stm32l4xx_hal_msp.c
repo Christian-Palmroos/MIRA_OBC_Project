@@ -273,7 +273,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     PA6     ------> SPI1_MISO
     PA7     ------> SPI1_MOSI
     */
-    GPIO_InitStruct.Pin = LORA0_NSS_Pin|LORA0_SCK_Pin|LORA0_MISO_Pin|LORA0_MOSI_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_4|LORA0_SCK_Pin|LORA0_MISO_Pin|LORA0_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -309,7 +309,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     PA6     ------> SPI1_MISO
     PA7     ------> SPI1_MOSI
     */
-    HAL_GPIO_DeInit(GPIOA, LORA0_NSS_Pin|LORA0_SCK_Pin|LORA0_MISO_Pin|LORA0_MOSI_Pin);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4|LORA0_SCK_Pin|LORA0_MISO_Pin|LORA0_MOSI_Pin);
 
   /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
