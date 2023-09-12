@@ -28,6 +28,7 @@
 
 #include "usbd_cdc.h"
 
+// BMP
 #include "bmp3.h"
 #include "bmp3_defs.h"
 #include "bmp390_task.h"
@@ -39,8 +40,6 @@
 #include "custom_bus.h"
 
 //LoRa
-#include "LoRa.h"
-#include "SX1278.h"
 #include "lora_sx1276.h"
 
 //include the library
@@ -294,40 +293,6 @@ int main(void)
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
 
-  // Run another SPI1 init because?
-  //HAL_SPI_MspInit(&hspi1);
-  //initialize LoRa module
-//  	SX1278_hw.dio0.port = LORA_DIG0_GPIO_Port;
-//  	SX1278_hw.dio0.pin = LORA_DIG0_Pin;
-//  	SX1278_hw.nss.port = LORA0_NSS_GPIO_Port;
-//  	SX1278_hw.nss.pin = LORA0_NSS_Pin;
-//  	SX1278_hw.reset.port = LORA_RST_GPIO_Port;
-//  	SX1278_hw.reset.pin = LORA_RST_Pin;
-//  	SX1278_hw.spi = &hspi1;
-//
-//  	SX1278.hw = &SX1278_hw;
-//
-//  	printf("Configuring LoRa module\r\n");
-//  	SX1278_init(&SX1278, 434000000, SX1278_POWER_17DBM, SX1278_LORA_SF_7,
-//  	SX1278_LORA_BW_125KHZ, SX1278_LORA_CR_4_5, SX1278_LORA_CRC_EN, 10);
-//  	printf("Done configuring LoRaModule\r\n");
-//
-//
-//  	message_length = sprintf(buffer, "Hello %d", message);
-//	if (SX1278_LoRaEntryTx(&SX1278, message_length, 2000) == 0){
-//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-//	}
-//	else {
-//		HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-//	}
-//
-//	if (SX1278_LoRaTxPacket(&SX1278, (uint8_t*) buffer,message_length, 2000)){
-//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-//	}
-//	else {
-//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-//	}
-
 
   uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
   if (lora_res != LORA_OK) {
@@ -490,6 +455,7 @@ int main(void)
 		// Start timer again
 		tick = 10;
 
+		//----------------------------------------------------------------------------------------------------------------------
 		// Print current time
 		sprintf(system_time_buffer, "\ntime: %.0f s \n", system_time_counter);
 		while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
@@ -506,6 +472,7 @@ int main(void)
 		// Toggle LED on board to indicate succesful timer management
 		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
+		//----------------------------------------------------------------------------------------------------------------------
 		// bmp needed to be forced for this kind of data reading, as now FIFO buffers or dready interrupts are being used
 		bmp_settings.op_mode = BMP3_MODE_FORCED;
 		bmp_result = bmp3_set_op_mode(&bmp_settings, &bmp_device);
@@ -551,7 +518,7 @@ int main(void)
 			lora_send_packet(&lora, (uint8_t *)"test", 4);
 			lora_send_packet(&lora, (uint8_t *)"test", 4);
 		}
-
+		//----------------------------------------------------------------------------------------------------------------------
 		// Read gyro acceleration and angular velocity data
 		gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
 		gyro_result_angularvel = LSM6DSO_GYRO_GetAxes (&gyro_device, &gyro_angularvel_object);
@@ -580,7 +547,24 @@ int main(void)
 			lora_send_packet(&lora, (uint8_t *)"test", 4);
 			lora_send_packet(&lora, (uint8_t *)"test", 4);
 		}
+		//----------------------------------------------------------------------------------------------------------------------
+		// Read and send MIRA data
+		//mira_read()
 
+		// Print mira measurements
+//		while (CDC_Transmit_FS ("MIRA START\n", 11) == USBD_BUSY);
+//		while (CDC_Transmit_FS (mira_buffer, strlen(mira_buffer)) == USBD_BUSY);
+//		while (CDC_Transmit_FS ("GYRO END\n\n", 10) == USBD_BUSY);
+//
+//		// Write mira to SD
+//		if (sd_status == FR_OK){
+//			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
+//		}
+//
+//		// Send mira data to LORA
+//		if (lora_res == LORA_OK) {
+//			lora_send_packet(&lora, (uint8_t *)"test", 4);
+//		}
 
 		}
 
