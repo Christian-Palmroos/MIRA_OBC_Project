@@ -23,64 +23,101 @@
 #define TIME_PACKET 0x52
 #define	CALIBRATION_PACKET 0x82
 
-void mira_read(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout){
+HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t Size, uint32_t Timeout){
+
+	HAL_StatusTypeDef STATUS;
 
 	// read register at given address and set to given pointer
-	HAL_UART_Receive(huart, pData, Size, Timeout);
+	STATUS = HAL_UART_Receive(huart, rxBuffer, Size, Timeout);
 
 	// return status
+	return STATUS;
 
 }
 
-void mira_write(UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout){
+HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, const uint8_t *commandHex, uint16_t Size, uint32_t Timeout){
+
+	HAL_StatusTypeDef STATUS;
 
 	// write given value to register at given address
-	HAL_UART_Transmit(huart, pData, Size, Timeout);
+	STATUS = HAL_UART_Transmit(huart, commandHex, Size, Timeout);
 
 	// return status
+	return STATUS;
 
 }
 
-void mira_science_data(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout){
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout){
 
-	// mira_read() to given pointer
-	mira_read(huart, pData, Size, Timeout);
+	HAL_StatusTypeDef STATUS;
+
+	// ask to read data
+	STATUS = mira_write(huart, GET_SCIENCE_DATA, len(GET_SCIENCE_DATA), Timeout);
+	// receive asked data
+	if (STATUS) {
+		STATUS = mira_read(huart, pData, Size, Timeout);
+	}
+	else {
+		return STATUS;
+	}
 
 	// set mark_as_read
-	mira_write(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, 0x80:payload:0x81, Size, Timeout);
 
 	// return status
+	return STATUS;
+}
+
+HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout){
+
+	HAL_StatusTypeDef STATUS;
+
+	// ask to read data
+	STATUS = mira_write(huart, GET_HOUSEKEEPING, len(GET_HOUSEKEEPING), Timeout);
+	// receive asked data
+	if (STATUS) {
+		STATUS = mira_read(huart, pData, Size, Timeout);
+	}
+	else {
+		return STATUS;
+	}
+
+	// return status
+	return STATUS;
 
 }
 
-void mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout){
+HAL_StatusTypeDef mira_init(){
 
-	// mira_read() to given pointer
-	mira_read(huart, pData, Size, Timeout);
-
-	// return status
-
-}
-
-void mira_init(){
+	HAL_StatusTypeDef STATUS;
+	uint8_t time;
 
 	// Turn on MIRA power (GPIO)
 	HAL_GPIO_TogglePin (MIRA_EN_PWR_GPIO_Port, MIRA_EN_PWR_Pin);
 
 	// OBC queries MIRA time
-	mira_read(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, GET_TIME, len(GET_TIME), Timeout);
+	if (STATUS != HAL_OK) return STATUS;
+	STATUS = mira_read(huart, time, len(time), Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// activate powersave
-	mira_write(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, ADDRESS, Size, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// OBC writes configuration data to MIRA registers
-	mira_write(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, ADDRESS, Size, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// OBC sets MIRA time
-	mira_write(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, ADDRESS, Size, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// return from powersave
-	mira_write(huart, pData, Size, Timeout);
+	STATUS = mira_write(huart, ADDRESS, Size, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
+
+	return STATUS;
 
 }
 
