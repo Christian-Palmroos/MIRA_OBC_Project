@@ -28,6 +28,7 @@
 #define MARK_AS_READ 0x81
 #define POWERSAVE 0xC0
 
+
 HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
@@ -40,6 +41,7 @@ HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16
 
 }
 
+
 HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, const uint8_t *commandHex, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
@@ -51,6 +53,7 @@ HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, const uint8_t *commandHe
 	return STATUS;
 
 }
+
 
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
@@ -73,6 +76,7 @@ HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer
 	// return status
 	return STATUS;
 }
+
 
 HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
@@ -112,6 +116,7 @@ HAL_StatusTypeDef activate_powersave(UART_HandleTypeDef *huart, uint32_t Timeout
 	return STATUS;
 }
 
+
 HAL_StatusTypeDef deactivate_powersave(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
@@ -130,6 +135,7 @@ HAL_StatusTypeDef deactivate_powersave(UART_HandleTypeDef *huart, uint32_t Timeo
 
 	return STATUS;
 }
+
 
 HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart){
 
