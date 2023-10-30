@@ -29,6 +29,20 @@
 #define POWERSAVE 0xC0
 
 
+uint8_t build_message(int command, int payload) {
+	// Sync 2 bytes
+	// Length 2 bytes
+	// Src. Address 1 bytes
+	// Dest. Address 1 bytes
+	// Command code 1 bytes
+	// Payload 256 bytes
+	// Checksum 2 bytes
+	uint8_t message[265];
+
+	return message;
+}
+
+
 HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
