@@ -5,39 +5,58 @@
  *      Author: shonyb
  */
 
+#include <string.h>
+
 // Command codes to MIRA
-#define STATUS_REQUEST 0x00
-#define READ_REGISTER 0x02
-#define WRITE_REGISTER 0x03
-#define GET_HOUSEKEEPING 0x30
-#define	GET_SCIENCE_DATA 0x40
-#define	GET_CALBRATION_DATA 0x42
-#define	SET_TIME 0x50
-#define GET_TIME 0x51
+const uint8_t STATUS_REQUEST = 0x00;
+const uint8_t READ_REGISTER = 0x02;
+const uint8_t WRITE_REGISTER = 0x03;
+const uint8_t GET_HOUSEKEEPING = 0x30;
+const uint8_t GET_SCIENCE_DATA = 0x40;
+const uint8_t GET_CALBRATION_DATA = 0x42;
+const uint8_t SET_TIME = 0x50;
+const uint8_t GET_TIME = 0x51;
 
 // MIRA responses
-#define STATUS_PACKET 0x71
-#define REGISTER_CONTENT 0x72
-#define HK_PACKET 0x31
-#define SCIENCE_DATA_PACKET 0x41
-#define TIME_PACKET 0x52
-#define	CALIBRATION_PACKET 0x82
+const uint8_t STATUS_PACKET = 0x71;
+const uint8_t REGISTER_CONTENT = 0x72;
+const uint8_t HK_PACKET = 0x31;
+const uint8_t SCIENCE_DATA_PACKET = 0x41;
+const uint8_t TIME_PACKET = 0x52;
+const uint8_t CALIBRATION_PACKET = 0x82;
 
 // MIRA configurations
-#define CHECK_FOR_READ 0x80
-#define MARK_AS_READ 0x81
-#define POWERSAVE 0xC0
+const uint8_t CHECK_FOR_READ = 0x80;
+const uint8_t MARK_AS_READ = 0x81;
+const uint8_t POWERSAVE = 0xC0;
+
+//empty payload
+const uint8_t EMPTY_PAYLOAD;
 
 
-uint8_t build_message(int command, int payload) {
-	// Sync 2 bytes
-	// Length 2 bytes
-	// Src. Address 1 bytes
-	// Dest. Address 1 bytes
+uint8_t calc_checksum() {
+	return 0x00;
+}
+
+uint8_t build_message(uint8_t *command, uint8_t *payload) {
+
 	// Command code 1 bytes
 	// Payload 256 bytes
-	// Checksum 2 bytes
+
 	uint8_t message[265];
+	uint8_t *sync[2] = {0x00, 0x00};
+	uint8_t *length[2] = {0x00, 0x00};
+	uint8_t *src[1] = {0x00};
+	uint8_t *dest[1] = {0x00};
+	uint8_t *checksum[2] = calc_checksum();
+
+	strcat(message, sync);
+	strcat(message, length);
+	strcat(message, src);
+	strcat(message, dest);
+	strcat(message, command);
+	strcat(message, payload);
+	strcat(message, checksum);
 
 	return message;
 }
@@ -56,12 +75,12 @@ HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16
 }
 
 
-HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, const uint8_t *commandHex, uint32_t Timeout){
+HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, uint8_t *message, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
 
 	// write given value to register at given address
-	STATUS = HAL_UART_Transmit(huart, commandHex, sizeof(commandHex), Timeout);
+	STATUS = HAL_UART_Transmit(huart, message, 265, Timeout);
 
 	// return status
 	return STATUS;
@@ -72,20 +91,31 @@ HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, const uint8_t *commandHe
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
+	uint8_t message;
+
+	message = build_message(GET_SCIENCE_DATA, EMPTY_PAYLOAD);
 
 	// ask to read data
-	STATUS = mira_write(huart, GET_SCIENCE_DATA, sizeof(GET_SCIENCE_DATA), Timeout);
+
+	STATUS = mira_write(huart, message, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 	// receive asked data
-	if (STATUS) {
-		STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
-	}
-	else {
-		return STATUS;
-	}
+
+	STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// set mark_as_read
-	STATUS = mira_write(huart, CHECK_FOR_READ, sizeof(CHECK_FOR_READ), Timeout);
-	STATUS = mira_write(huart, MARK_AS_READ, sizeof(MARK_AS_READ), Timeout);
+	message = build_message(CHECK_FOR_READ, EMPTY_PAYLOAD);
+	STATUS = mira_write(huart, message, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
+	STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
+
+
+	message = build_message(MARK_AS_READ, EMPTY_PAYLOAD);
+	STATUS = mira_write(huart, message, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
+	STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
 
 	// return status
 	return STATUS;
@@ -95,16 +125,14 @@ HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer
 HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
 
 	HAL_StatusTypeDef STATUS;
+	uint8_t message;
+	message = build_message(GET_HOUSEKEEPING, EMPTY_PAYLOAD);
 
 	// ask to read data
-	STATUS = mira_write(huart, GET_HOUSEKEEPING, sizeof(GET_HOUSEKEEPING), Timeout);
+	STATUS = mira_write(huart, message, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 	// receive asked data
-	if (STATUS) {
-		STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
-	}
-	else {
-		return STATUS;
-	}
+	STATUS = mira_read(huart, rxBuffer, rxSize, Timeout);
 
 	// return status
 	return STATUS;
@@ -157,12 +185,14 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart){
 	int size_time = 30;
 	uint8_t time[size_time];
 	uint32_t Timeout = 2000;
+	uint8_t message;
 
 	// Turn on MIRA power (GPIO)
 	HAL_GPIO_TogglePin (MIRA_EN_PWR_GPIO_Port, MIRA_EN_PWR_Pin);
 
 	// OBC queries MIRA time
-	STATUS = mira_write(huart, GET_TIME, Timeout);
+	message = build_message(GET_TIME, EMPTY_PAYLOAD);
+	STATUS = mira_write(huart, message, Timeout);
 	if (STATUS != HAL_OK) return STATUS;
 	STATUS = mira_read(huart, time, size_time, Timeout);
 	if (STATUS != HAL_OK) return STATUS;
@@ -172,11 +202,12 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart){
 	if (STATUS != HAL_OK) return STATUS;
 
 	// OBC writes configuration data to MIRA registers
-	//STATUS = mira_write(huart, ADDRESS, Timeout);
-	//if (STATUS != HAL_OK) return STATUS;
+	STATUS = mira_write(huart, ADDRESS, Timeout);
+	if (STATUS != HAL_OK) return STATUS;
 
 	// OBC sets MIRA time
-	STATUS = mira_write(huart, SET_TIME, Timeout);
+	message = build_message(SET_TIME, );
+	STATUS = mira_write(huart, message, Timeout);
 	if (STATUS != HAL_OK) return STATUS;
 
 	// return from powersave
