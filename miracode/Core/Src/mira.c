@@ -31,11 +31,24 @@ const uint8_t MARK_AS_READ = 0x81;
 const uint8_t POWERSAVE = 0xC0;
 
 //empty payload
-const uint8_t EMPTY_PAYLOAD;
+const uint8_t EMPTY_PAYLOAD[1] = {0x99}; //Check that this is not used
 
 
 uint8_t calc_checksum() {
-	return 0x00;
+
+	uint8_t sum[2] = {0x00, 0x00};
+
+	return sum; //check how to return 2 bytes
+}
+
+// real checksum probably just return 00 ^
+unsigned int checksum(char *str) {
+   unsigned int sum = 0;
+   while (*str) {
+      sum += *str;
+      str++;
+   }
+   return sum;
 }
 
 uint8_t build_message(uint8_t *command, uint8_t *payload) {
@@ -43,11 +56,12 @@ uint8_t build_message(uint8_t *command, uint8_t *payload) {
 	// Command code 1 bytes
 	// Payload 256 bytes
 
-	uint8_t message[265];
-	uint8_t *sync[2] = {0x00, 0x00};
-	uint8_t *length[2] = {0x00, 0x00};
-	uint8_t *src[1] = {0x00};
-	uint8_t *dest[1] = {0x00};
+	int msg_size = 9 + sizeof(payload);
+	uint8_t message[msg_size];
+	uint8_t *sync[2] = {0x5a, 0xce};
+	uint8_t *length[2] = {0x00, 0x05};
+	uint8_t *src[1] = {0xc1};
+	uint8_t *dest[1] = {0xe1};
 	uint8_t *checksum[2] = calc_checksum();
 
 	strcat(message, sync);
@@ -55,7 +69,9 @@ uint8_t build_message(uint8_t *command, uint8_t *payload) {
 	strcat(message, src);
 	strcat(message, dest);
 	strcat(message, command);
-	strcat(message, payload);
+	if (payload[0] != 0x99){
+		strcat(message, payload);
+	}
 	strcat(message, checksum);
 
 	return message;
@@ -80,9 +96,25 @@ HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, uint8_t *message, uint32
 	HAL_StatusTypeDef STATUS;
 
 	// write given value to register at given address
-	STATUS = HAL_UART_Transmit(huart, message, 265, Timeout);
+	STATUS = HAL_UART_Transmit(huart, message, sizeof(message), Timeout);
 
 	// return status
+	return STATUS;
+
+}
+
+HAL_StatusTypeDef mira_test_rw(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize){
+
+	uint8_t message;
+
+	message = build_message(WRITE_REGISTER, 0x02);
+	//print()
+	STATUS = mira_write(*huart, *message, 5000);
+	if (STATUS != HAL_OK) return STATUS;
+	STATUS = mira_read(*huart, *rxBuffer, rxSize, 5000);
+	//print()
+	if (STATUS != HAL_OK) return STATUS;
+
 	return STATUS;
 
 }
