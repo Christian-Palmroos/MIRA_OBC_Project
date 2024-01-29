@@ -46,6 +46,9 @@
 #include "nmea_parse.h"
 #include <inttypes.h>
 
+//MIRA
+#include "mira.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -293,6 +296,33 @@ int main(void)
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
 
+  HAL_StatusTypeDef status;
+
+
+  // enable channel 1 for MIRA communication
+  HAL_GPIO_TogglePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin);
+  HAL_GPIO_TogglePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin);
+
+  //msg_size = build_message(&message, &command, &payload);
+  //status = mira_write(&huart1, message, 5000);
+  uint8_t reg[1] = {0x02};
+  uint8_t data[4] = {0x00,0x00,0x00,0x01};
+  status = mira_write_register(&huart1, reg, data, 5000);
+
+  if (status == HAL_OK) {
+	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+  }
+
+
+  reg[0] = 0x01;
+    data[3] = 0x00;
+    status = mira_write_register(&huart1, reg,data, 5000);
+
+  reg[0] = 0x00;
+  data[3] = 0x05;
+  status = mira_write_register(&huart1, reg, data, 5000);
+
+  while(1);
 
   uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
   if (lora_res != LORA_OK) {

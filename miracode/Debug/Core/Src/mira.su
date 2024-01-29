@@ -1,0 +1,13 @@
+../Core/Src/mira.c:38:9:calc_checksum	16	static
+../Core/Src/mira.c:46:14:checksum	24	static
+../Core/Src/mira.c:55:10:CRC16	24	static
+../Core/Src/mira.c:104:5:build_message	56	static
+../Core/Src/mira.c:130:19:mira_write_register	64	static
+../Core/Src/mira.c:168:19:mira_read	32	static
+../Core/Src/mira.c:181:19:mira_write	32	static
+../Core/Src/mira.c:193:19:mira_test_rw	136	static
+../Core/Src/mira.c:212:19:mira_science_data	136	static
+../Core/Src/mira.c:247:19:mira_housekeeping_data	136	static
+../Core/Src/mira.c:265:19:activate_powersave	24	static
+../Core/Src/mira.c:285:19:deactivate_powersave	24	static
+../Core/Src/mira.c:305:19:mira_init	168	dynamic
