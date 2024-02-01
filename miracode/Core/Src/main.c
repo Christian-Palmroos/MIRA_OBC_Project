@@ -307,20 +307,22 @@ int main(void)
   //status = mira_write(&huart1, message, 5000);
   uint8_t reg[1] = {0x02};
   uint8_t data[4] = {0x00,0x00,0x00,0x01};
-  status = mira_write_register(&huart1, reg, data, 5000);
+  uint8_t mira_rx[10];
+  status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
 
   if (status == HAL_OK) {
 	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
   }
 
 
-  reg[0] = 0x01;
-    data[3] = 0x00;
-    status = mira_write_register(&huart1, reg,data, 5000);
+  //reg[0] = 0x01;
+  //  data[3] = 0x00;
 
-  reg[0] = 0x00;
-  data[3] = 0x05;
-  status = mira_write_register(&huart1, reg, data, 5000);
+    //status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
+
+  //reg[0] = 0x00;
+  //data[3] = 0x05;
+  //status = mira_write_register(&huart1, reg, data, 5000);
 
   while(1);
 
@@ -369,6 +371,7 @@ int main(void)
 
   bmp_result = bmp3_init(&bmp_device);
   bmp3_check_rslt("bmp3_init", bmp_result);
+
 
   bmp_settings.int_settings.drdy_en = BMP3_DISABLE;
   bmp_settings.int_settings.latch = BMP3_ENABLE;
