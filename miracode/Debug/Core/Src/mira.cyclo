@@ -1,5 +1,5 @@
 mira.c:38:10:CRC16	2
-mira.c:88:19:mira_write_register	2
+mira.c:88:19:mira_write_register	1
 mira.c:131:19:mira_read_reply	1
 mira.c:142:19:mira_read	1
 mira.c:155:19:mira_write	1

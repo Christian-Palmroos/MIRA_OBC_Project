@@ -118,10 +118,10 @@ HAL_StatusTypeDef mira_write_register(UART_HandleTypeDef *huart, uint8_t *reg, u
 	// write given value to register at given address
 	status = HAL_UART_Transmit(huart, message, 14, Timeout);
 
-	if (status == HAL_OK) {
+	//if (status == HAL_OK) {
 		//status = mira_read_reply(huart, rxBuffer, Timeout);
-		status = HAL_UART_Receive(huart, rxBuffer, 10, Timeout);
-	}
+	//	status = HAL_UART_Receive(huart, rxBuffer, 10, Timeout);
+	//}
 
 	// return status
 	return status;

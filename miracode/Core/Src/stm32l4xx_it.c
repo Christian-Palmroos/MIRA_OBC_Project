@@ -51,6 +51,13 @@ volatile unsigned gps_send_ready = 1;
 volatile uint8_t tick;
 volatile uint8_t tickGPS;
 
+uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
+uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
+volatile uint8_t *mira_rxBuffer;
+volatile uint8_t mira_rxBufferPos;
+volatile unsigned mira_data_ready;
+volatile unsigned mira_send_ready = 1;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +73,7 @@ volatile uint8_t tickGPS;
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim17;
+extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 
@@ -223,6 +231,34 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
 
   /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+	 char c = huart1.Instance->RDR;
+	    if (mira_rxBufferPos < mira_RXBUFSIZE - 1)
+	    	{ mira_rxBuffer[mira_rxBufferPos++] = (uint8_t) c; }
+
+	    if ((c == '\n') && (mira_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
+	    {
+	    	//tickGPS = 1;
+	    	mira_rxBuffer[mira_rxBufferPos] = 0;
+	    	mira_data_ready |= 1;
+	    	mira_send_ready ^= 1;
+	    	mira_rxBufferPos = 0;
+			if (mira_rxBuffer == mira_rxBuffer1) {mira_rxBuffer = mira_rxBuffer2;}
+			else {mira_rxBuffer = mira_rxBuffer1;}
+			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+	    }
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**

@@ -305,26 +305,49 @@ int main(void)
 
   //msg_size = build_message(&message, &command, &payload);
   //status = mira_write(&huart1, message, 5000);
-  uint8_t reg[1] = {0x02};
-  uint8_t data[4] = {0x00,0x00,0x00,0x01};
-  uint8_t mira_rx[10];
-  status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
+	mira_rxBuffer = mira_rxBuffer1;
+	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_UE);
+	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_RE);
+	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
+	uint8_t reg[1] = {0x02};
+	uint8_t data[4] = {0x00,0x00,0x00,0x01};
+	uint8_t mira_rx[10];
+	status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
 
-  if (status == HAL_OK) {
+	while(mira_data_ready != 1);
+	// Toggle LED on board whenever printing data
+	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	//while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
+
+	// Choose the buffer from the two data buffers that is nit currently being written into
+	if (mira_rxBuffer == mira_rxBuffer1)
+		{
+		while (CDC_Transmit_FS (mira_rxBuffer2, strlen(mira_rxBuffer2)) == USBD_BUSY);
+		}
+	else
+		{
+		while (CDC_Transmit_FS (mira_rxBuffer1, strlen(mira_rxBuffer1)) == USBD_BUSY);
+		}
+
+	// Toggle flags to allow for buffer swapping and next data batch sending
+	mira_data_ready ^= 1;
+	mira_send_ready |= 1;
+
+	if (status == HAL_OK) {
 	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-  }
+	}
 
 
-  //reg[0] = 0x01;
-  //  data[3] = 0x00;
+	//reg[0] = 0x01;
+	//  data[3] = 0x00;
 
-    //status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
+	//status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
 
-  //reg[0] = 0x00;
-  //data[3] = 0x05;
-  //status = mira_write_register(&huart1, reg, data, 5000);
+	//reg[0] = 0x00;
+	//data[3] = 0x05;
+	//status = mira_write_register(&huart1, reg, data, 5000);
 
-  while(1);
+	while(1);
 
   uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
   if (lora_res != LORA_OK) {
