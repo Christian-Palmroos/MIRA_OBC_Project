@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    stm32l4xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    stm32l4xx_it.c
+ * @brief   Interrupt Service Routines.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2023 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -85,132 +85,132 @@ extern UART_HandleTypeDef huart2;
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
-  * @brief This function handles Non maskable interrupt.
-  */
+ * @brief This function handles Non maskable interrupt.
+ */
 void NMI_Handler(void)
 {
-  /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
+	/* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
-  /* USER CODE END NonMaskableInt_IRQn 0 */
-  HAL_RCC_NMI_IRQHandler();
-  /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-  while (1)
-  {
-  }
-  /* USER CODE END NonMaskableInt_IRQn 1 */
+	/* USER CODE END NonMaskableInt_IRQn 0 */
+	HAL_RCC_NMI_IRQHandler();
+	/* USER CODE BEGIN NonMaskableInt_IRQn 1 */
+	while (1)
+	{
+	}
+	/* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
 /**
-  * @brief This function handles Hard fault interrupt.
-  */
+ * @brief This function handles Hard fault interrupt.
+ */
 void HardFault_Handler(void)
 {
-  /* USER CODE BEGIN HardFault_IRQn 0 */
+	/* USER CODE BEGIN HardFault_IRQn 0 */
 
-  /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
-  }
+	/* USER CODE END HardFault_IRQn 0 */
+	while (1)
+	{
+		/* USER CODE BEGIN W1_HardFault_IRQn 0 */
+		/* USER CODE END W1_HardFault_IRQn 0 */
+	}
 }
 
 /**
-  * @brief This function handles Memory management fault.
-  */
+ * @brief This function handles Memory management fault.
+ */
 void MemManage_Handler(void)
 {
-  /* USER CODE BEGIN MemoryManagement_IRQn 0 */
+	/* USER CODE BEGIN MemoryManagement_IRQn 0 */
 
-  /* USER CODE END MemoryManagement_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
-    /* USER CODE END W1_MemoryManagement_IRQn 0 */
-  }
+	/* USER CODE END MemoryManagement_IRQn 0 */
+	while (1)
+	{
+		/* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
+		/* USER CODE END W1_MemoryManagement_IRQn 0 */
+	}
 }
 
 /**
-  * @brief This function handles Prefetch fault, memory access fault.
-  */
+ * @brief This function handles Prefetch fault, memory access fault.
+ */
 void BusFault_Handler(void)
 {
-  /* USER CODE BEGIN BusFault_IRQn 0 */
+	/* USER CODE BEGIN BusFault_IRQn 0 */
 
-  /* USER CODE END BusFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_BusFault_IRQn 0 */
-    /* USER CODE END W1_BusFault_IRQn 0 */
-  }
+	/* USER CODE END BusFault_IRQn 0 */
+	while (1)
+	{
+		/* USER CODE BEGIN W1_BusFault_IRQn 0 */
+		/* USER CODE END W1_BusFault_IRQn 0 */
+	}
 }
 
 /**
-  * @brief This function handles Undefined instruction or illegal state.
-  */
+ * @brief This function handles Undefined instruction or illegal state.
+ */
 void UsageFault_Handler(void)
 {
-  /* USER CODE BEGIN UsageFault_IRQn 0 */
+	/* USER CODE BEGIN UsageFault_IRQn 0 */
 
-  /* USER CODE END UsageFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
-    /* USER CODE END W1_UsageFault_IRQn 0 */
-  }
+	/* USER CODE END UsageFault_IRQn 0 */
+	while (1)
+	{
+		/* USER CODE BEGIN W1_UsageFault_IRQn 0 */
+		/* USER CODE END W1_UsageFault_IRQn 0 */
+	}
 }
 
 /**
-  * @brief This function handles System service call via SWI instruction.
-  */
+ * @brief This function handles System service call via SWI instruction.
+ */
 void SVC_Handler(void)
 {
-  /* USER CODE BEGIN SVCall_IRQn 0 */
+	/* USER CODE BEGIN SVCall_IRQn 0 */
 
-  /* USER CODE END SVCall_IRQn 0 */
-  /* USER CODE BEGIN SVCall_IRQn 1 */
+	/* USER CODE END SVCall_IRQn 0 */
+	/* USER CODE BEGIN SVCall_IRQn 1 */
 
-  /* USER CODE END SVCall_IRQn 1 */
+	/* USER CODE END SVCall_IRQn 1 */
 }
 
 /**
-  * @brief This function handles Debug monitor.
-  */
+ * @brief This function handles Debug monitor.
+ */
 void DebugMon_Handler(void)
 {
-  /* USER CODE BEGIN DebugMonitor_IRQn 0 */
+	/* USER CODE BEGIN DebugMonitor_IRQn 0 */
 
-  /* USER CODE END DebugMonitor_IRQn 0 */
-  /* USER CODE BEGIN DebugMonitor_IRQn 1 */
+	/* USER CODE END DebugMonitor_IRQn 0 */
+	/* USER CODE BEGIN DebugMonitor_IRQn 1 */
 
-  /* USER CODE END DebugMonitor_IRQn 1 */
+	/* USER CODE END DebugMonitor_IRQn 1 */
 }
 
 /**
-  * @brief This function handles Pendable request for system service.
-  */
+ * @brief This function handles Pendable request for system service.
+ */
 void PendSV_Handler(void)
 {
-  /* USER CODE BEGIN PendSV_IRQn 0 */
+	/* USER CODE BEGIN PendSV_IRQn 0 */
 
-  /* USER CODE END PendSV_IRQn 0 */
-  /* USER CODE BEGIN PendSV_IRQn 1 */
+	/* USER CODE END PendSV_IRQn 0 */
+	/* USER CODE BEGIN PendSV_IRQn 1 */
 
-  /* USER CODE END PendSV_IRQn 1 */
+	/* USER CODE END PendSV_IRQn 1 */
 }
 
 /**
-  * @brief This function handles System tick timer.
-  */
+ * @brief This function handles System tick timer.
+ */
 void SysTick_Handler(void)
 {
-  /* USER CODE BEGIN SysTick_IRQn 0 */
+	/* USER CODE BEGIN SysTick_IRQn 0 */
 
-  /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
+	/* USER CODE END SysTick_IRQn 0 */
+	HAL_IncTick();
+	/* USER CODE BEGIN SysTick_IRQn 1 */
 
-  /* USER CODE END SysTick_IRQn 1 */
+	/* USER CODE END SysTick_IRQn 1 */
 }
 
 /******************************************************************************/
@@ -221,121 +221,122 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 channel1 global interrupt.
-  */
+ * @brief This function handles DMA1 channel1 global interrupt.
+ */
 void DMA1_Channel1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+	/* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart1_rx);
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
+	/* USER CODE END DMA1_Channel1_IRQn 0 */
+	HAL_DMA_IRQHandler(&hdma_usart1_rx);
+	/* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel1_IRQn 1 */
+	/* USER CODE END DMA1_Channel1_IRQn 1 */
 }
 
 /**
-  * @brief This function handles DMA1 channel2 global interrupt.
-  */
+ * @brief This function handles DMA1 channel2 global interrupt.
+ */
 void DMA1_Channel2_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
+	/* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart1_tx);
-  /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
+	/* USER CODE END DMA1_Channel2_IRQn 0 */
+	HAL_DMA_IRQHandler(&hdma_usart1_tx);
+	/* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel2_IRQn 1 */
+	/* USER CODE END DMA1_Channel2_IRQn 1 */
 }
 
 /**
-  * @brief This function handles TIM1 trigger and commutation interrupts and TIM17 global interrupt.
-  */
+ * @brief This function handles TIM1 trigger and commutation interrupts and TIM17 global interrupt.
+ */
 void TIM1_TRG_COM_TIM17_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 0 */
-  if (tick) {tick--;}
-  if (tickGPS) {tickGPS--;}
-  /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim17);
-  /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
+	/* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 0 */
+	if (tick) {tick--;}
+	if (tickGPS) {tickGPS--;}
+	/* USER CODE END TIM1_TRG_COM_TIM17_IRQn 0 */
+	HAL_TIM_IRQHandler(&htim17);
+	/* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
 
-  /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 1 */
+	/* USER CODE END TIM1_TRG_COM_TIM17_IRQn 1 */
 }
 
 /**
-  * @brief This function handles USART1 global interrupt.
-  */
+ * @brief This function handles USART1 global interrupt.
+ */
 void USART1_IRQHandler(void)
+
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
-	 char c = huart1.Instance->RDR;
-	    if (mira_rxBufferPos < mira_RXBUFSIZE - 1)
-	    	{ mira_rxBuffer[mira_rxBufferPos++] = (uint8_t) c; }
+	/* USER CODE BEGIN USART1_IRQn 0 */
+//	char c = huart1.Instance->RDR;
+//	if (mira_rxBufferPos < mira_RXBUFSIZE - 1)
+//	{ mira_rxBuffer[mira_rxBufferPos++] = (uint8_t) c; }
+//
+//	if ((mira_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') || (c == '\n') &&
+//	{
+//		//tickGPS = 1;
+//		mira_rxBuffer[mira_rxBufferPos] = 0;
+//		mira_data_ready |= 1;
+//		mira_send_ready ^= 1;
+//		mira_rxBufferPos = 0;
+//		if (mira_rxBuffer == mira_rxBuffer1) {mira_rxBuffer = mira_rxBuffer2;}
+//		else {mira_rxBuffer = mira_rxBuffer1;}
+//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//	}
+	/* USER CODE END USART1_IRQn 0 */
+	HAL_UART_IRQHandler(&huart1);
+	/* USER CODE BEGIN USART1_IRQn 1 */
 
-	    if ((mira_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') || (c == '\n') &&
-	    {
-	    	//tickGPS = 1;
-	    	mira_rxBuffer[mira_rxBufferPos] = 0;
-	    	mira_data_ready |= 1;
-	    	mira_send_ready ^= 1;
-	    	mira_rxBufferPos = 0;
-			if (mira_rxBuffer == mira_rxBuffer1) {mira_rxBuffer = mira_rxBuffer2;}
-			else {mira_rxBuffer = mira_rxBuffer1;}
-			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	    }
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
+	/* USER CODE END USART1_IRQn 1 */
 }
 
 /**
-  * @brief This function handles USART2 global interrupt.
-  */
+ * @brief This function handles USART2 global interrupt.
+ */
 void USART2_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART2_IRQn 0 */
+	/* USER CODE BEGIN USART2_IRQn 0 */
 
-    char c = huart2.Instance->RDR;
-    if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
-    	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
+	char c = huart2.Instance->RDR;
+	if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
+	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
 
-    if ((c == '\n') && (gps_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
-    {
-    	//tickGPS = 1;
-    	gps_rxBuffer[gps_rxBufferPos] = 0;
-    	gps_data_ready |= 1;
-    	gps_send_ready ^= 1;
-    	gps_rxBufferPos = 0;
+	if ((c == '\n') && (gps_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
+	{
+		//tickGPS = 1;
+		gps_rxBuffer[gps_rxBufferPos] = 0;
+		gps_data_ready |= 1;
+		gps_send_ready ^= 1;
+		gps_rxBufferPos = 0;
 		if (gps_rxBuffer == gps_rxBuffer1) {gps_rxBuffer = gps_rxBuffer2;}
 		else {gps_rxBuffer = gps_rxBuffer1;}
 		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-    }
+	}
 
-    //HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	  //rchar = huart2.Instance->RDR;
+	//HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	//rchar = huart2.Instance->RDR;
 
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
+	/* USER CODE END USART2_IRQn 0 */
+	HAL_UART_IRQHandler(&huart2);
+	/* USER CODE BEGIN USART2_IRQn 1 */
 	//ATOMIC_SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
-  /* USER CODE END USART2_IRQn 1 */
+	/* USER CODE END USART2_IRQn 1 */
 }
 
 /**
-  * @brief This function handles USB OTG FS global interrupt.
-  */
+ * @brief This function handles USB OTG FS global interrupt.
+ */
 void OTG_FS_IRQHandler(void)
 {
-  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+	/* USER CODE BEGIN OTG_FS_IRQn 0 */
 
-  /* USER CODE END OTG_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
-  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+	/* USER CODE END OTG_FS_IRQn 0 */
+	HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+	/* USER CODE BEGIN OTG_FS_IRQn 1 */
 
-  /* USER CODE END OTG_FS_IRQn 1 */
+	/* USER CODE END OTG_FS_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
