@@ -77,6 +77,8 @@ TIM_HandleTypeDef htim17;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -85,6 +87,7 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 static void MX_SPI1_Init(void);
@@ -276,6 +279,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_SDMMC1_SD_Init();
   MX_SPI1_Init();
@@ -300,8 +304,9 @@ int main(void)
 
 
   // enable channel 1 for MIRA communication
-  HAL_GPIO_TogglePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin);
-  HAL_GPIO_TogglePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin);
+  HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+
 
   //msg_size = build_message(&message, &command, &payload);
   //status = mira_write(&huart1, message, 5000);
@@ -309,43 +314,69 @@ int main(void)
 	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_UE);
 	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_RE);
 	ATOMIC_SET_BIT(huart1.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
+
 	uint8_t reg[1] = {0x02};
 	uint8_t data[4] = {0x00,0x00,0x00,0x01};
 	uint8_t mira_rx[10];
+
+
+	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+		//while (CDC_Transmit_FS (mira_rx, sizeof(mira_rx)) == USBD_BUSY);
+	}
+
+	while(1){
 	status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
-
-	while(mira_data_ready != 1);
-	// Toggle LED on board whenever printing data
+	//status = mira_read_reply(&huart1, mira_rx, 5000);
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	//while (CDC_Transmit_FS ("GPS START\n", 10) == USBD_BUSY);
 
-	// Choose the buffer from the two data buffers that is nit currently being written into
+	HAL_Delay(100);
+	while (CDC_Transmit_FS (mira_rx, sizeof(mira_rx)) == USBD_BUSY);
+
+
+
+	reg[0] = 0x01;
+	data[3] = 0x00;
+	status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
+	HAL_Delay(100);
+	while (CDC_Transmit_FS (mira_rx, sizeof(mira_rx)) == USBD_BUSY);
+	HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+
+	reg[0] = 0x00;
+	data[3] = 0x05;
+	status = mira_write_register(&huart1, reg, data, mira_rx,  5000);
+	HAL_Delay(100);
+	while (CDC_Transmit_FS (mira_rx, sizeof(mira_rx)) == USBD_BUSY);
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
+	}
+
+	//while(mira_data_ready != 1);
+	// Toggle LED on board whenever printing data
+
+
+	// Choose the buffer from the two data buffers that is not currently being written into
+	while(1){
+
+	if (mira_data_ready){
 	if (mira_rxBuffer == mira_rxBuffer1)
 		{
 		while (CDC_Transmit_FS (mira_rxBuffer2, strlen(mira_rxBuffer2)) == USBD_BUSY);
+		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 		}
 	else
 		{
 		while (CDC_Transmit_FS (mira_rxBuffer1, strlen(mira_rxBuffer1)) == USBD_BUSY);
+		//HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 		}
 
 	// Toggle flags to allow for buffer swapping and next data batch sending
 	mira_data_ready ^= 1;
 	mira_send_ready |= 1;
-
-	if (status == HAL_OK) {
-	  HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+	HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	}
-
-
-	//reg[0] = 0x01;
-	//  data[3] = 0x00;
-
-	//status = mira_write_register(&huart1, reg, data, mira_rx, 5000);
-
-	//reg[0] = 0x00;
-	//data[3] = 0x05;
-	//status = mira_write_register(&huart1, reg, data, 5000);
+	}
 
 	while(1);
 
@@ -935,7 +966,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115000;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -1013,6 +1044,26 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 

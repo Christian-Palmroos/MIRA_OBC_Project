@@ -107,6 +107,7 @@ void Error_Handler(void);
 #define POWERGOOD_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 
 /* USER CODE END Private defines */
 

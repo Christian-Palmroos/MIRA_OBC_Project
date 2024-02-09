@@ -31,6 +31,7 @@ const uint8_t CHECK_FOR_READ = 0x80;
 const uint8_t MARK_AS_READ = 0x81;
 const uint8_t POWERSAVE = 0xC0;
 
+uint8_t toggle = 0;
 //empty payload
 const uint8_t EMPTY_PAYLOAD[1] = {0x99}; //Check that this is not used
 
@@ -115,20 +116,23 @@ HAL_StatusTypeDef mira_write_register(UART_HandleTypeDef *huart, uint8_t *reg, u
 
 	message[12] = (sum&0xFF00)>>8;
 	message[13] = (sum&0x00FF);
+
 	// write given value to register at given address
+
 	status = HAL_UART_Transmit(huart, message, 14, Timeout);
+	status = HAL_UART_Receive_DMA(huart, rxBuffer, 10);
 
-	//if (status == HAL_OK) {
-		//status = mira_read_reply(huart, rxBuffer, Timeout);
-	//	status = HAL_UART_Receive(huart, rxBuffer, 10, Timeout);
-	//}
+	  HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_RESET);
 
-	// return status
+
+
 	return status;
 
 }
 
-HAL_StatusTypeDef mira_read_reply(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
+
+HAL_StatusTypeDef mira_read_reply(HAL_StatusTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
 	status = HAL_UART_Receive(huart, rxBuffer, 10, Timeout);

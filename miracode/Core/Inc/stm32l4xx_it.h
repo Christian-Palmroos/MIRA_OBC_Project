@@ -49,7 +49,7 @@ extern volatile uint8_t step;
 extern volatile unsigned gps_data_ready;
 extern volatile unsigned gps_send_ready;
 
-#define mira_RXBUFSIZE 20
+#define mira_RXBUFSIZE 10
 extern uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
 extern uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
 
@@ -74,6 +74,8 @@ void SVC_Handler(void);
 void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
+void DMA1_Channel1_IRQHandler(void);
+void DMA1_Channel2_IRQHandler(void);
 void TIM1_TRG_COM_TIM17_IRQHandler(void);
 void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);

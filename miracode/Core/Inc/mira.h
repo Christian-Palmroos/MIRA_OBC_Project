@@ -9,6 +9,7 @@
 #define INC_MIRA_H_
 
 HAL_StatusTypeDef mira_write_register(UART_HandleTypeDef *huart, uint8_t *reg, uint32_t *data, uint8_t *rxBuffer, uint32_t Timeout);
+HAL_StatusTypeDef mira_read_reply(HAL_StatusTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout);
 HAL_StatusTypeDef mira_write(UART_HandleTypeDef *huart, uint8_t *message, uint32_t Timeout);
 HAL_StatusTypeDef mira_read(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout);
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout);
