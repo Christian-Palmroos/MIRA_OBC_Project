@@ -116,7 +116,7 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 
 	// write given value to register at given address
 	status = HAL_UART_Transmit(huart, message, sizeof(message), Timeout);
-	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(message));
+	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
 
 	// Enable receiver and disable transmitter, remember to flip after receive
 	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_RESET);
@@ -127,54 +127,22 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 }
 
 
-HAL_StatusTypeDef mira_test_rw(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize){
-
-	uint8_t message[100];
-	int msg_size;
-	HAL_StatusTypeDef status;
-
-	msg_size = build_message(&message, WRITE_REGISTER, 0x02);
-	//print()
-	status = mira_write(huart, message, 5000);
-	if (status != HAL_OK) return status;
-	status = mira_read(huart, *rxBuffer, rxSize, 5000);
-	//print()
-	if (status != HAL_OK) return status;
-
-	return status;
-
-}
-
-
-HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout){
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
-	uint8_t message[100];
-	int msg_size;
+	uint8_t mira_command_code = 0x00;
+	uint8_t mira_target_reg = 0x00;
+	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x00};
+	//GET_SCIENCE_DATA
+	//CHECK_FOR_READ
+	//MARK_AS_READ
+	mira_target_reg = GET_SCIENCE_DATA;
+	//mira_Tx_payload[3] = 0x00;
 
-	msg_size = build_message(&message, GET_SCIENCE_DATA, EMPTY_PAYLOAD);
+	status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, rxBuffer, 5000);
+	while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 
-	// ask to read data
-
-	status = mira_write(huart, message, Timeout);
-	if (status != HAL_OK) return status;
-	// receive asked data
-
-	status = mira_read(huart, rxBuffer, rxSize, Timeout);
-	if (status != HAL_OK) return status;
-
-	// set mark_as_read
-	msg_size = build_message(&message, CHECK_FOR_READ, EMPTY_PAYLOAD);
-	status = mira_write(huart, message, Timeout);
-	if (status != HAL_OK) return status;
-	status = mira_read(huart, rxBuffer, rxSize, Timeout);
-	if (status != HAL_OK) return status;
-
-
-	msg_size = build_message(*message, MARK_AS_READ, EMPTY_PAYLOAD);
-	status = mira_write(huart, message, Timeout);
-	if (status != HAL_OK) return status;
-	status = mira_read(huart, rxBuffer, rxSize, Timeout);
 
 	// return status
 	return status;

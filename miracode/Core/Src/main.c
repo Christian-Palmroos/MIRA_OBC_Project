@@ -256,6 +256,7 @@ int main(void)
 	uint8_t mira_target_reg = 0x00;
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x01};
 	uint8_t mira_Rx_buffer[10];
+	uint8_t mira_science_Rx_buffer[9+144];
 
 	//	SX1278_hw_t SX1278_hw;
 	//	SX1278_t SX1278;
@@ -520,6 +521,9 @@ int main(void)
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+
+	/// Main program /////////////////////////////////////////////////////////////////////////////////
+	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	while (1)
 	{
