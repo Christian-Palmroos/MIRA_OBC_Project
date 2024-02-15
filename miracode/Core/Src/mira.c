@@ -34,6 +34,9 @@ const uint8_t POWERSAVE = 0xC0;
 //empty payload DEPRECATED
 const uint8_t EMPTY_PAYLOAD[1] = {0x99}; //Check that this is not used
 
+//MIRA communication status
+volatile uint8_t mira_ready_for_comm = 1;
+
 
 uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
 {
@@ -87,6 +90,9 @@ uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
 
 HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *data, uint8_t *rxBuffer, uint32_t Timeout){
 
+	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
+	while (mira_ready_for_comm == 0);
+
 	HAL_StatusTypeDef status;
 	uint8_t message[14];
 
@@ -118,31 +124,30 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 	status = HAL_UART_Transmit(huart, message, sizeof(message), Timeout);
 	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
 
-	// Enable receiver and disable transmitter, remember to flip after receive
+	// Enable receiver and disable transmitter, remember to flip after receive (currently done by HAL_UART_RxCpltCallback)
 	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_RESET);
+
+	mira_ready_for_comm = 0;
 
 	return status;
 
 }
 
 
-HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
-	uint8_t mira_command_code = 0x00;
 	uint8_t mira_target_reg = 0x00;
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x00};
-	//GET_SCIENCE_DATA
-	//CHECK_FOR_READ
-	//MARK_AS_READ
-	mira_target_reg = GET_SCIENCE_DATA;
-	//mira_Tx_payload[3] = 0x00;
 
-	status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, rxBuffer, 5000);
-	while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	// Get the science data and save it to rxBuffer
+	status = mira_command(huart, GET_SCIENCE_DATA, mira_target_reg, mira_Tx_payload, science_Rx, 5000);
+	if (status != HAL_OK) {return status;}
 
+	// Mark as read
+	mira_Tx_payload[3] = MARK_AS_READ;
+	status = mira_command(huart, WRITE_REGISTER, CHECK_FOR_READ, mira_Tx_payload, response_Rx, 5000);
 
 	// return status
 	return status;

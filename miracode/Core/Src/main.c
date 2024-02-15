@@ -186,6 +186,7 @@ uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+		mira_ready_for_comm = 1;
 }
 
 /* USER CODE END 0 */
@@ -255,8 +256,9 @@ int main(void)
 	uint8_t mira_command_code = 0x00;
 	uint8_t mira_target_reg = 0x00;
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x01};
-	uint8_t mira_Rx_buffer[10];
+	uint8_t mira_Rx_buffer[9+1];
 	uint8_t mira_science_Rx_buffer[9+144];
+	uint8_t mira_response_Rx_buffer[9+1];
 
 	//	SX1278_hw_t SX1278_hw;
 	//	SX1278_t SX1278;
