@@ -183,11 +183,16 @@ uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
 	return 0;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
-		mira_ready_for_comm |= 1;
-}
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+//		mira_ready_for_comm = 1;
+//}
+
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+//		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_RESET);
+//}
 
 /* USER CODE END 0 */
 
@@ -324,14 +329,27 @@ int main(void)
 	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
 
-	// Enable ADC on MIRA.
-	mira_target_reg = 0x02;
-	mira_Tx_payload[3] = 0x01;
-	status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
+	// WAIT FOR USB CONNECTION
+	//while (CDC_Transmit_FS ("START", 5) == USBD_BUSY);
 
-	HAL_Delay(100);
-	while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	// Run test sequence for MIRA
+	//	status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+	//	HAL_Delay(100);
+	//	while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
+	//	HAL_Delay(100);
+	//	while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
+	//	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+
+	// Enable ADC on MIRA.
+	//	mira_target_reg = 0x02;
+	//	mira_Tx_payload[3] = 0x01;
+	//	status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
+	//
+	//	HAL_Delay(100);
+	//	while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+	//	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+	//
+	//	while(1);
 
 
 	while(1){
@@ -339,27 +357,25 @@ int main(void)
 		mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
 		HAL_Delay(100);
 		while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
-		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 
 		while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
-		while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
-//		mira_target_reg = 0x01;
-//		mira_Tx_payload[3] = 0x00;
-//
-//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
-//		HAL_Delay(100);
-//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-//
-//		mira_target_reg = 0x00;
-//		mira_Tx_payload[3] = 0x05;
-//
-//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer,  5000);
-//		HAL_Delay(100);
-//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		//		mira_target_reg = 0x01;
+		//		mira_Tx_payload[3] = 0x00;
+		//
+		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
+		//		HAL_Delay(100);
+		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+		//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+		//
+		//		mira_target_reg = 0x00;
+		//		mira_Tx_payload[3] = 0x05;
+		//
+		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer,  5000);
+		//		HAL_Delay(100);
+		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+		//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	}
 
@@ -777,6 +793,15 @@ static void MX_NVIC_Init(void)
 	/* USART2_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(USART2_IRQn);
+	/* USART1_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(USART1_IRQn);
+	/* DMA1_Channel1_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+	/* DMA1_Channel2_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 }
 
 /**
@@ -1062,14 +1087,6 @@ static void MX_DMA_Init(void)
 	/* DMA controller clock enable */
 	__HAL_RCC_DMAMUX1_CLK_ENABLE();
 	__HAL_RCC_DMA1_CLK_ENABLE();
-
-	/* DMA interrupt init */
-	/* DMA1_Channel1_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-	/* DMA1_Channel2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 

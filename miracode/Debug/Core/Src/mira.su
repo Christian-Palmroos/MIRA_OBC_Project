@@ -1,8 +1,8 @@
 ../Core/Src/mira.c:41:10:CRC16	24	static
 ../Core/Src/mira.c:91:19:mira_command	88	dynamic
-../Core/Src/mira.c:141:19:mira_science_data	40	static
-../Core/Src/mira.c:159:19:mira_test_sequence	40	static
-../Core/Src/mira.c:183:19:mira_housekeeping_data	136	static
-../Core/Src/mira.c:201:19:activate_powersave	24	static
-../Core/Src/mira.c:221:19:deactivate_powersave	24	static
-../Core/Src/mira.c:241:19:mira_init	168	dynamic
+../Core/Src/mira.c:146:19:mira_science_data	40	static
+../Core/Src/mira.c:164:19:mira_test_sequence	48	static
+../Core/Src/mira.c:290:19:mira_housekeeping_data	40	static
+../Core/Src/mira.c:304:19:activate_powersave	40	static
+../Core/Src/mira.c:338:19:deactivate_powersave	40	static
+../Core/Src/mira.c:372:19:mira_init	48	static
