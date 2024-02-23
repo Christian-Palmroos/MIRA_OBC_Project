@@ -1,8 +1,8 @@
-mira.c:41:10:CRC16	2
-mira.c:91:19:mira_command	2
-mira.c:146:19:mira_science_data	2
-mira.c:164:19:mira_test_sequence	16
-mira.c:290:19:mira_housekeeping_data	2
-mira.c:304:19:activate_powersave	5
-mira.c:338:19:deactivate_powersave	5
-mira.c:372:19:mira_init	3
+mira.c:38:10:CRC16	2
+mira.c:88:19:mira_command	2
+mira.c:143:19:mira_science_data	2
+mira.c:161:19:mira_test_sequence	16
+mira.c:287:19:mira_housekeeping_data	2
+mira.c:301:19:activate_powersave	5
+mira.c:335:19:deactivate_powersave	5
+mira.c:369:19:mira_init	4

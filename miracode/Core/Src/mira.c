@@ -31,9 +31,6 @@ const uint8_t CHECK_FOR_READ = 0x80;
 const uint8_t MARK_AS_READ = 0x81;
 const uint8_t POWERSAVE = 0xC0;
 
-//empty payload DEPRECATED
-const uint8_t EMPTY_PAYLOAD[1] = {0x99}; //Check that this is not used
-
 //MIRA communication status
 //volatile unsigned mira_ready_for_comm = 1;
 
@@ -165,101 +162,101 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 
 	HAL_StatusTypeDef status;
 	uint8_t mira_response_Rx[10];
-	uint8_t mira_Tx_payload[4] = {0x00, 0x00, 0x00, 0x00};
+	uint8_t mira_write_Tx_payload[4] = {0x00, 0x00, 0x00, 0x00};
 
 	// Set time to 0
-	status = mira_command(huart, WRITE_REGISTER, 0x0F, mira_Tx_payload, mira_response_Rx, Timeout);
+	status = mira_command(huart, WRITE_REGISTER, 0x0F, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 
 	// Activate ADC
-	mira_Tx_payload[3] = 0x01;
-	status = mira_command(huart, WRITE_REGISTER, 0x02, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x01;
+	status = mira_command(huart, WRITE_REGISTER, 0x02, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Select ADC channel for analysis
-	mira_Tx_payload[3] = 0x05;
-	status = mira_command(huart, WRITE_REGISTER, 0x03, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x05;
+	status = mira_command(huart, WRITE_REGISTER, 0x03, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Set calibration multiplier, 3250 = 0xCB2
-	mira_Tx_payload[2] = 0x0C;
-	mira_Tx_payload[3] = 0xB2;
-	status = mira_command(huart, WRITE_REGISTER, 0x0E, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[2] = 0x0C;
+	mira_write_Tx_payload[3] = 0xB2;
+	status = mira_command(huart, WRITE_REGISTER, 0x0E, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[2] = 0x00;
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[2] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Set integration time to 5 seconds
-	mira_Tx_payload[3] = 0x05;
-	status = mira_command(huart, WRITE_REGISTER, 0x07, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x05;
+	status = mira_command(huart, WRITE_REGISTER, 0x07, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Skipping read spectrum status
 
 	// Set test pulser size
-	mira_Tx_payload[2] = 0x07;
-	mira_Tx_payload[3] = 0xFF;
-	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[2] = 0x07;
+	mira_write_Tx_payload[3] = 0xFF;
+	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[2] = 0x00;
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[2] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Activate test pulser
-	mira_Tx_payload[3] = 0x01;
-	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x01;
+	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Activate analysis using default parameters
-	mira_Tx_payload[3] = 0x01;
-	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x01;
+	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Pause while integration happens
 	HAL_Delay(800);
 
 	// Set test pulser size
-	mira_Tx_payload[2] = 0x04;
-	mira_Tx_payload[3] = 0x00;
-	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[2] = 0x04;
+	mira_write_Tx_payload[3] = 0x00;
+	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[2] = 0x00;
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[2] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Pause while integration happens
 	HAL_Delay(1500);
 
 	// Set test pulser size
-	mira_Tx_payload[2] = 0x05;
-	mira_Tx_payload[3] = 0xDC;
-	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[2] = 0x05;
+	mira_write_Tx_payload[3] = 0xDC;
+	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[2] = 0x00;
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[2] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Pause while integration happens
 	HAL_Delay(1000);
 
 	// Set test pulser size
-	mira_Tx_payload[2] = 0x09;
-	mira_Tx_payload[3] = 0xC4;
-	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[2] = 0x09;
+	mira_write_Tx_payload[3] = 0xC4;
+	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[2] = 0x00;
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[2] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Pause while integration happens
 	HAL_Delay(500);
 
 	// Set test pulser size
-	mira_Tx_payload[3] = 0x00;
-	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x00;
+	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Pause while integration happens
 	HAL_Delay(1200);
@@ -271,16 +268,16 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	if (status != HAL_OK) {return status;}
 
 	// Deactivate analysis
-	mira_Tx_payload[3] = 0x00;
-	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x00;
+	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	// Deactivate test pulser
-	mira_Tx_payload[3] = 0x00;
-	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_Tx_payload, mira_response_Rx, Timeout);
+	mira_write_Tx_payload[3] = 0x00;
+	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
-	mira_Tx_payload[3] = 0x00;
+	mira_write_Tx_payload[3] = 0x00;
 
 	return status;
 

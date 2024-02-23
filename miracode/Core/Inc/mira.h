@@ -31,9 +31,6 @@ extern const uint8_t CHECK_FOR_READ;
 extern const uint8_t MARK_AS_READ;
 extern const uint8_t POWERSAVE;
 
-//empty payload DEPRECATED
-extern const uint8_t EMPTY_PAYLOAD; //Check that this is not used
-
 //MIRA communication status
 //extern volatile unsigned mira_ready_for_comm;
 
