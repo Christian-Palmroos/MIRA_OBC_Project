@@ -280,6 +280,23 @@ int main(void)
 	// HAL status for status checks for HAL functions
 	HAL_StatusTypeDef status;
 
+	// USB buffers to receive PC commands
+	uint8_t usb_Rx_buffer[2];
+	int8_t usb_status;
+
+	static uint8_t USB_PLACEHOLDER = 0x00;
+
+	static uint8_t USB_CHECKSTATUS = 0x01;
+	static uint8_t USB_TESTOUTPUT = 0x02;
+
+	static uint8_t USB_MIRA = 0x01;
+	static uint8_t USB_LORA = 0x02;
+	static uint8_t USB_GYRO = 0x03;
+	static uint8_t USB_BMP = 0x04;
+	static uint8_t USB_GPS = 0x05;
+	static uint8_t USB_SD = 0x06;
+	static uint8_t USB_TIMERS = 0x07;
+
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
@@ -561,13 +578,104 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 
+	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
+	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
+	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
+	while (1) {
+
+		usb_status = CDC_Receive_FS(usb_Rx_buffer, sizeof(usb_Rx_buffer));
+
+		if (usb_Rx_buffer[0] == USB_MIRA) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+		if (usb_Rx_buffer[0] == USB_LORA) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+
+		if (usb_Rx_buffer[0] == USB_GYRO) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+
+		if (usb_Rx_buffer[0] == USB_BMP) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+
+		if (usb_Rx_buffer[0] == USB_GPS) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+
+		if (usb_Rx_buffer[0] == USB_SD) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+			}
+
+		}
+
+		if (usb_Rx_buffer[0] == USB_TIMERS) {
+			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+			}
+			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+				if (tick == 0) {
+					tick = 10;
+					while (tick != 0);
+					printf("Tick works!");
+				}
+
+				if (tickGPS == 0) {
+					tickGPS = 10;
+					while (tickGPS != 0);
+					printf("TickGPS works!");
+				}
+			}
+
+		}
+
+	}
+
+	// Reset timers before main program
+	tick = 0;
+	tickGPS = 0;
+
 
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	while (1)
 	{
-
 		/// BMP and Gyro /////////////////////////////////////////////////////////////////////////////////
 		// Read temperature, pressure and gyro data every second
 		if (tick == 0)
