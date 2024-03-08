@@ -5,29 +5,24 @@ import os
 found = False
 i = 0
 while not found:
-    if i > 10:
+    if i > 20:
         raise Exception("Device not found under /dev/ttyACMx!")
     try:
-        ser = serial.Serial(f'/dev/ttyACM{i}', 115200, timeout = 2, write_timeout = 5)
-        print(f'Device found at /dev/ttyACM{i}')
+        ser = serial.Serial(f'/dev/ttyACM{i%10}', 115200, timeout = 2, write_timeout = 5)
+        print(f'Device found at /dev/ttyACM{i%10}')
         found = True
     except:
-        print(f'Was not /dev/ttyACM{i}')
+        print(f'Was not /dev/ttyACM{i%10}')
         i+=1
         
 
 def main():
 
     echo_switch = False
-    # connect = ser.readline().strip()
-    # if connect == 'CONNECTED':
-    #   print("OBC connected!")
-    # else:
-    #   print("Failed to connect to the OBC.")
-    #   raise Exception("Check connection to the OBC.")
+
     start = time.time()
     print("Emptying queue...")
-    while time.time()-start < 5:
+    while time.time()-start < 10:
         print(ser.readline())
 
     while True:
@@ -81,3 +76,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         ser.close()
         print("\nKilled.")
+    except:
+        ser.close()

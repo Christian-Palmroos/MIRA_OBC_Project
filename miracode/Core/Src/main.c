@@ -351,7 +351,8 @@ int main(void)
 	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
 
 	// WAIT FOR USB CONNECTION
-	//while (CDC_Transmit_FS ("START", 5) == USBD_BUSY);
+	HAL_Delay(8000);
+	while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY);
 
 	// Run test sequence for MIRA
 	//	status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
@@ -359,60 +360,28 @@ int main(void)
 	//	while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
 	//	HAL_Delay(100);
 	//	while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
-	//	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 
 	// Enable ADC on MIRA.
 	//	mira_target_reg = 0x02;
 	//	mira_Tx_payload[3] = 0x01;
 	//	status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
-	//
-	//	HAL_Delay(100);
-	//	while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-	//	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	//
-	//	while(1);
-
-//
-//	while(1){
-//
-//		mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-//		HAL_Delay(100);
-//		while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
-//
-//		while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
-//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-//
-//		//		mira_target_reg = 0x01;
-//		//		mira_Tx_payload[3] = 0x00;
-//		//
-//		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
-//		//		HAL_Delay(100);
-//		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-//		//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-//		//
-//		//		mira_target_reg = 0x00;
-//		//		mira_Tx_payload[3] = 0x05;
-//		//
-//		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer,  5000);
-//		//		HAL_Delay(100);
-//		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-//		//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-//
-//	}
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
 	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
-//	if (lora_res != LORA_OK) {
-//		// Initialization failed
-//		HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-//		while(1);
-//	}
-	//  lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
-	//      if (lora_res != LORA_OK) {
-	//        // Send failed
-	//    	  HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	//      }
+	if (lora_res != LORA_OK) {
+		// Initialization failed
+		while (CDC_Transmit_FS ("LORA INIT NOT OK!\n", 18) == USBD_BUSY);
+	}
+	lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
+	if (lora_res != LORA_OK) {
+		// Send failed
+		while (CDC_Transmit_FS ("LORA SEND NOT OK!\n", 18) == USBD_BUSY);
+	}
+	if (lora_res == LORA_OK) {
+		// All good
+		while (CDC_Transmit_FS ("LORA OK!\n", 9) == USBD_BUSY);
+	}
 
 	/// LoRa test send /////////////////////////////////////////////////////////////////////////////////
 
@@ -479,10 +448,11 @@ int main(void)
 	bmp_result = bmp3_set_sensor_settings(bmp_settings_select, &bmp_settings, &bmp_device);
 	bmp3_check_rslt("bmp3_set_sensor_settings", bmp_result);
 
-	if (bmp_result == 0)
-	{while (CDC_Transmit_FS ("BMP OK!\n", 8) == USBD_BUSY);}
-	else
-	{while (CDC_Transmit_FS ("BMP NOT OK!\n", 12) == USBD_BUSY);}
+	if (bmp_result == BMP3_OK) {
+		while (CDC_Transmit_FS ("BMP OK!\n", 8) == USBD_BUSY);
+	}
+//	else
+//	{while (CDC_Transmit_FS ("BMP NOT OK!\n", 12) == USBD_BUSY);}
 
 	/*bmp_settings.op_mode = BMP3_MODE_NORMAL;
 	bmp_result = bmp3_set_op_mode(&bmp_settings, &bmp_device);
@@ -573,7 +543,7 @@ int main(void)
 			while (CDC_Transmit_FS (i2c2check_active_address, strlen(i2c2check_active_address)) == USBD_BUSY);
 		}
 	}
-	while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
+	//while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	//--[ Scanning Done ]--
 
 	/* USER CODE END 2 */
