@@ -23,7 +23,7 @@ def main():
     start = time.time()
     print("Emptying queue...")
     while time.time()-start < 10:
-        print(ser.readline())
+        print(ser.readline().decode('latin-1'), end = "")
 
     while True:
         print()
@@ -33,6 +33,7 @@ def main():
             print("Command options:")
             print("     flightmode - OBC goes to flightmode and terminates USB communication.")
             print("     ping - Pings the OBC to see if it replies.")
+            print("     readmode - Swap to USB line read-only mode.")
 
         elif userinput == "flightmode":
             print("Going into flight mode...")
@@ -66,9 +67,16 @@ def main():
                 
             response = ser.readline().decode('latin-1')
             print("Response:", response)
+            
+        elif userinput == "readmode":
+            print("OK, reading...")
+            break
         
         else:
             print("Not a command.")
+            
+    while True:
+        print(ser.readline().decode('latin-1'), end = "")
  
 if __name__ == "__main__":
     try: 
