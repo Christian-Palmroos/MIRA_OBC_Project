@@ -64,7 +64,8 @@
   */
 
 /* USER CODE BEGIN EXPORTED_TYPES */
-
+ extern uint8_t usb_Rx_buffer[2];
+ extern volatile uint8_t usb_Rx_ready;
 /* USER CODE END EXPORTED_TYPES */
 
 /**

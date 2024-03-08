@@ -280,8 +280,8 @@ int main(void)
 	// HAL status for status checks for HAL functions
 	HAL_StatusTypeDef status;
 
-	// USB buffers to receive PC commands
-	uint8_t usb_Rx_buffer[2];
+	// USB buffers to receive PC commands (2-byte command, first byte target device or flightmode, second byte the command for the device. If no command desired input USB_PLACEHOLDER as second byte.)
+	//uint8_t usb_Rx_buffer[2];
 	int8_t usb_status;
 
 	static uint8_t USB_PLACEHOLDER = 0x00;
@@ -296,6 +296,9 @@ int main(void)
 	static uint8_t USB_GPS = 0x05;
 	static uint8_t USB_SD = 0x06;
 	static uint8_t USB_TIMERS = 0x07;
+
+	static uint8_t USB_PING = 0x08;
+	static uint8_t USB_FLIGHTMODE = 0x09;
 
 	/* USER CODE END 1 */
 
@@ -369,42 +372,42 @@ int main(void)
 	//
 	//	while(1);
 
-
-	while(1){
-
-		mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-		HAL_Delay(100);
-		while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
-
-		while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
-		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-
-		//		mira_target_reg = 0x01;
-		//		mira_Tx_payload[3] = 0x00;
-		//
-		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
-		//		HAL_Delay(100);
-		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-		//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-		//
-		//		mira_target_reg = 0x00;
-		//		mira_Tx_payload[3] = 0x05;
-		//
-		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer,  5000);
-		//		HAL_Delay(100);
-		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
-		//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-
-	}
+//
+//	while(1){
+//
+//		mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+//		HAL_Delay(100);
+//		while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
+//
+//		while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
+//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//
+//		//		mira_target_reg = 0x01;
+//		//		mira_Tx_payload[3] = 0x00;
+//		//
+//		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
+//		//		HAL_Delay(100);
+//		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+//		//		HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//		//
+//		//		mira_target_reg = 0x00;
+//		//		mira_Tx_payload[3] = 0x05;
+//		//
+//		//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer,  5000);
+//		//		HAL_Delay(100);
+//		//		while (CDC_Transmit_FS (mira_Rx_buffer, sizeof(mira_Rx_buffer)) == USBD_BUSY);
+//		//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+//
+//	}
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
 	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
-	if (lora_res != LORA_OK) {
-		// Initialization failed
-		HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-		while(1);
-	}
+//	if (lora_res != LORA_OK) {
+//		// Initialization failed
+//		HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
+//		while(1);
+//	}
 	//  lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
 	//      if (lora_res != LORA_OK) {
 	//        // Send failed
@@ -581,9 +584,12 @@ int main(void)
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
+	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	while (1) {
 
-		usb_status = CDC_Receive_FS(usb_Rx_buffer, sizeof(usb_Rx_buffer));
+		while (usb_Rx_ready == 0);
+		usb_Rx_ready = 0;
+
 
 		if (usb_Rx_buffer[0] == USB_MIRA) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
@@ -594,7 +600,7 @@ int main(void)
 			}
 
 		}
-		if (usb_Rx_buffer[0] == USB_LORA) {
+		else if (usb_Rx_buffer[0] == USB_LORA) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -604,7 +610,7 @@ int main(void)
 
 		}
 
-		if (usb_Rx_buffer[0] == USB_GYRO) {
+		else if (usb_Rx_buffer[0] == USB_GYRO) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -614,7 +620,7 @@ int main(void)
 
 		}
 
-		if (usb_Rx_buffer[0] == USB_BMP) {
+		else if (usb_Rx_buffer[0] == USB_BMP) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -624,7 +630,7 @@ int main(void)
 
 		}
 
-		if (usb_Rx_buffer[0] == USB_GPS) {
+		else if (usb_Rx_buffer[0] == USB_GPS) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -634,7 +640,7 @@ int main(void)
 
 		}
 
-		if (usb_Rx_buffer[0] == USB_SD) {
+		else if (usb_Rx_buffer[0] == USB_SD) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -644,7 +650,7 @@ int main(void)
 
 		}
 
-		if (usb_Rx_buffer[0] == USB_TIMERS) {
+		else if (usb_Rx_buffer[0] == USB_TIMERS) {
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
 			}
@@ -652,25 +658,36 @@ int main(void)
 				if (tick == 0) {
 					tick = 10;
 					while (tick != 0);
-					printf("Tick works!");
+					while (CDC_Transmit_FS ("\nTick works!\n", 13) == USBD_BUSY);
 				}
 
 				if (tickGPS == 0) {
 					tickGPS = 10;
 					while (tickGPS != 0);
-					printf("TickGPS works!");
+					while (CDC_Transmit_FS ("\nGPStick works!\n", 16) == USBD_BUSY);
 				}
 			}
 
 		}
 
-	}
+		else if (usb_Rx_buffer[1] == USB_FLIGHTMODE) {
+			while (CDC_Transmit_FS ("OK", 2) == USBD_BUSY);
+			break;
+		}
 
+		else if (usb_Rx_buffer[1] == USB_PING) {
+
+			while (CDC_Transmit_FS ("PONG", 4) == USBD_BUSY);
+			//break;
+		}
+
+	}
+	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	// Reset timers before main program
 	tick = 0;
 	tickGPS = 0;
 
-
+	HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
