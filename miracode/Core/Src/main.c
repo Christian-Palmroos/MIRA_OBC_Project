@@ -558,113 +558,121 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 
+	// Have a timer to break the USB loop in case of power cycle
+	tick = 0;
+
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	while (1) {
 
-		while (usb_Rx_ready == 0);
-		usb_Rx_ready = 0;
+		// One minute grace timer
+		if (tick > 600) {break;}
 
+		// if something through USB is received (toggled by interrupt in CDC)
+		if (usb_Rx_ready != 0){
 
-		if (usb_Rx_buffer[0] == USB_MIRA) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+			tick = 0;
+			usb_Rx_ready = 0;
 
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+			if (usb_Rx_buffer[0] == USB_MIRA) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
-			}
-
-		}
-		else if (usb_Rx_buffer[0] == USB_LORA) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-				lora_res = lora_send_packet(&lora, &lora_test_packet, sizeof(lora_test_packet));
-				if (lora_res != LORA_OK) {
-					while (CDC_Transmit_FS ("\nERROR!\n", sizeof("\nERROR!\n")) == USBD_BUSY);
 				}
-				else {
-					while (CDC_Transmit_FS ("\nLora packet sent!\n", sizeof("\nLora packet sent!\n")) == USBD_BUSY);
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
 				}
 
 			}
+			else if (usb_Rx_buffer[0] == USB_LORA) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
 
-		}
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+					lora_res = lora_send_packet(&lora, &lora_test_packet, sizeof(lora_test_packet));
+					if (lora_res != LORA_OK) {
+						while (CDC_Transmit_FS ("\nERROR!\n", sizeof("\nERROR!\n")) == USBD_BUSY);
+					}
+					else {
+						while (CDC_Transmit_FS ("\nLora packet sent!\n", sizeof("\nLora packet sent!\n")) == USBD_BUSY);
+					}
 
-		else if (usb_Rx_buffer[0] == USB_GYRO) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-
-			}
-
-		}
-
-		else if (usb_Rx_buffer[0] == USB_BMP) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-
-			}
-
-		}
-
-		else if (usb_Rx_buffer[0] == USB_GPS) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-
-			}
-
-		}
-
-		else if (usb_Rx_buffer[0] == USB_SD) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-
-			}
-
-		}
-
-		else if (usb_Rx_buffer[0] == USB_TIMERS) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
-
-			}
-			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-				if (tick == 0) {
-					tick = 10;
-					while (tick != 0);
-					while (CDC_Transmit_FS ("\nTick works!\n", 13) == USBD_BUSY);
 				}
 
-				if (tickGPS == 0) {
-					tickGPS = 10;
-					while (tickGPS != 0);
-					while (CDC_Transmit_FS ("\nGPStick works!\n", 16) == USBD_BUSY);
-				}
 			}
 
+			else if (usb_Rx_buffer[0] == USB_GYRO) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+				}
+
+			}
+
+			else if (usb_Rx_buffer[0] == USB_BMP) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+				}
+
+			}
+
+			else if (usb_Rx_buffer[0] == USB_GPS) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+				}
+
+			}
+
+			else if (usb_Rx_buffer[0] == USB_SD) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+
+				}
+
+			}
+
+			else if (usb_Rx_buffer[0] == USB_TIMERS) {
+				if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+
+				}
+				else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+					if (tick == 0) {
+						tick = 10;
+						while (tick != 0);
+						while (CDC_Transmit_FS ("\nTick works!\n", 13) == USBD_BUSY);
+					}
+
+					if (tickGPS == 0) {
+						tickGPS = 10;
+						while (tickGPS != 0);
+						while (CDC_Transmit_FS ("\nGPStick works!\n", 16) == USBD_BUSY);
+					}
+				}
+
+			}
+
+			else if (usb_Rx_buffer[1] == USB_FLIGHTMODE) {
+				while (CDC_Transmit_FS ("OK", 2) == USBD_BUSY);
+				break;
+			}
+
+			else if (usb_Rx_buffer[1] == USB_PING) {
+
+				while (CDC_Transmit_FS ("PONG", 4) == USBD_BUSY);
+				//break;
+			}
 		}
-
-		else if (usb_Rx_buffer[1] == USB_FLIGHTMODE) {
-			while (CDC_Transmit_FS ("OK", 2) == USBD_BUSY);
-			break;
-		}
-
-		else if (usb_Rx_buffer[1] == USB_PING) {
-
-			while (CDC_Transmit_FS ("PONG", 4) == USBD_BUSY);
-			//break;
-		}
-
 	}
 
 
