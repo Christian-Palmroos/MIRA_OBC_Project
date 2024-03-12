@@ -300,6 +300,8 @@ int main(void)
 	static uint8_t USB_PING = 0x08;
 	static uint8_t USB_FLIGHTMODE = 0x09;
 
+	uint8_t lora_test_packet[10] = {0,1,2,3,4,5,6,7,8,9};
+
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
@@ -575,6 +577,13 @@ int main(void)
 
 			}
 			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
+				lora_res = lora_send_packet(&lora, &lora_test_packet, sizeof(lora_test_packet));
+				if (lora_res != LORA_OK) {
+					while (CDC_Transmit_FS ("\nERROR!\n", sizeof("\nERROR!\n")) == USBD_BUSY);
+				}
+				else {
+					while (CDC_Transmit_FS ("\nLora packet sent!\n", sizeof("\nLora packet sent!\n")) == USBD_BUSY);
+				}
 
 			}
 

@@ -2,6 +2,15 @@ import serial
 import time
 import os
 
+print("===============")
+print("OBC setup script")
+print("===============")
+print()
+
+# Toggles sent message echo from OBC
+echo_switch = False
+
+# Find the Virtual Com Port the device is under
 found = False
 i = 0
 while not found:
@@ -18,22 +27,24 @@ while not found:
 
 def main():
 
-    echo_switch = False
-
     start = time.time()
     print("Emptying queue...")
     while time.time()-start < 10:
         print(ser.readline().decode('latin-1'), end = "")
 
     while True:
+        
         print()
         userinput = input("Input (type h for help): ")
+
 
         if userinput == "h":
             print("Command options:")
             print("     flightmode - OBC goes to flightmode and terminates USB communication.")
             print("     ping - Pings the OBC to see if it replies.")
             print("     readmode - Swap to USB line read-only mode.")
+            print("     testlora - Tests LORA data sending.")
+
 
         elif userinput == "flightmode":
             print("Going into flight mode...")
@@ -53,6 +64,7 @@ def main():
             if response.startswith("OK"):
                 break
             
+            
         elif userinput == "ping":
             print("PING")
             
@@ -68,21 +80,43 @@ def main():
             response = ser.readline().decode('latin-1')
             print("Response:", response)
             
+        
+        elif userinput == "testlora":
+            print("Sending test packet with LORA...")
+            
+            msg = f"\x02\x02".encode()
+            
+            print(f"Waiting for response...")
+            ser.write(msg)
+            
+            if echo_switch:
+                echo = ser.readline()
+                print("Echo:", echo, "| Decoded:", echo.decode('latin-1'))
+                
+            response = ser.readline().decode('latin-1')
+            print("Response:", response)
+            
+            
         elif userinput == "readmode":
             print("OK, reading...")
-            break
+            while True:
+                print(ser.readline().decode('latin-1'), end = "")
+        
         
         else:
             print("Not a command.")
             
-    while True:
-        print(ser.readline().decode('latin-1'), end = "")
- 
+    
 if __name__ == "__main__":
+    
     try: 
         main()
+        
     except KeyboardInterrupt:
         ser.close()
+        print("============")
         print("\nKilled.")
+        print("============")
+    
     except:
         ser.close()

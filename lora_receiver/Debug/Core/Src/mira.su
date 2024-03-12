@@ -1,0 +1,8 @@
+../Core/Src/mira.c:38:10:CRC16	24	static
+../Core/Src/mira.c:88:19:mira_command	88	dynamic
+../Core/Src/mira.c:143:19:mira_science_data	40	static
+../Core/Src/mira.c:161:19:mira_test_sequence	48	static
+../Core/Src/mira.c:287:19:mira_housekeeping_data	40	static
+../Core/Src/mira.c:301:19:activate_powersave	40	static
+../Core/Src/mira.c:335:19:deactivate_powersave	40	static
+../Core/Src/mira.c:369:19:mira_init	56	static
