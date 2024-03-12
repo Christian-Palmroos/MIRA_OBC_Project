@@ -458,8 +458,8 @@ int main(void)
 	if (bmp_result == BMP3_OK) {
 		while (CDC_Transmit_FS ("BMP OK!\n", 8) == USBD_BUSY);
 	}
-//	else
-//	{while (CDC_Transmit_FS ("BMP NOT OK!\n", 12) == USBD_BUSY);}
+	//	else
+	//	{while (CDC_Transmit_FS ("BMP NOT OK!\n", 12) == USBD_BUSY);}
 
 	/*bmp_settings.op_mode = BMP3_MODE_NORMAL;
 	bmp_result = bmp3_set_op_mode(&bmp_settings, &bmp_device);
@@ -679,17 +679,17 @@ int main(void)
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	while (1) {
-		/// BMP and Gyro /////////////////////////////////////////////////////////////////////////////////
-		// Read temperature, pressure and gyro data every second
+
+		// Read temperature, pressure and gyro data every second and send everything to SD and lora every second
 		if (tick == 0) {
 			// Start timer again
 			tick = 10;
 
-			//----------------------------------------------------------------------------------------------------------------------
+			/// TIMER /////////////////////////////////////////////////////////////////////////////////
 			// Print current time
 			sprintf(system_time_buffer, "\ntime: %.0f s \n", system_time_counter);
 
-			while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
+			//while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
 			sprintf(data_buffer[last_i], "%s", system_time_buffer);
 			last_i = last_i + sizeof(system_time_buffer);
 
@@ -698,7 +698,8 @@ int main(void)
 			// Toggle LED on board to indicate succesful timer management
 			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
-			//----------------------------------------------------------------------------------------------------------------------
+
+			/// BMP  /////////////////////////////////////////////////////////////////////////////////
 			// bmp needed to be forced for this kind of data reading, as now FIFO buffers or dready interrupts are being used
 			bmp_settings.op_mode = BMP3_MODE_FORCED;
 			bmp_result = bmp3_set_op_mode(&bmp_settings, &bmp_device);
@@ -724,13 +725,13 @@ int main(void)
 			sprintf(bmp_temperature_buffer, "%.2f\n", bmp_data.temperature);
 			sprintf(bmp_pressure_buffer, "%.2f\n", bmp_data.pressure);
 
-			while (CDC_Transmit_FS ("\nBMP390 END\n", 12) == USBD_BUSY);
-			while (CDC_Transmit_FS (bmp_temperature_buffer, strlen(bmp_temperature_buffer)) == USBD_BUSY);
-			while (CDC_Transmit_FS (bmp_pressure_buffer, strlen(bmp_pressure_buffer)) == USBD_BUSY);
-			while (CDC_Transmit_FS ("BMP390 END\n\n", 12) == USBD_BUSY);
+			//while (CDC_Transmit_FS ("\nBMP390 END\n", 12) == USBD_BUSY);
+			//while (CDC_Transmit_FS (bmp_temperature_buffer, strlen(bmp_temperature_buffer)) == USBD_BUSY);
+			//while (CDC_Transmit_FS (bmp_pressure_buffer, strlen(bmp_pressure_buffer)) == USBD_BUSY);
+			//while (CDC_Transmit_FS ("BMP390 END\n\n", 12) == USBD_BUSY);
 
 
-			//----------------------------------------------------------------------------------------------------------------------
+			/// Gyro /////////////////////////////////////////////////////////////////////////////////
 			// Read gyro acceleration and angular velocity data
 			gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
 			gyro_result_angularvel = LSM6DSO_GYRO_GetAxes (&gyro_device, &gyro_angularvel_object);
@@ -740,8 +741,8 @@ int main(void)
 
 			// Print gyro measurements
 			//while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
-			while (CDC_Transmit_FS (gyro_acceleration_buffer, strlen(gyro_acceleration_buffer)) == USBD_BUSY);
-			while (CDC_Transmit_FS (gyro_angularvel_buffer, strlen(gyro_angularvel_buffer)) == USBD_BUSY);
+			//while (CDC_Transmit_FS (gyro_acceleration_buffer, strlen(gyro_acceleration_buffer)) == USBD_BUSY);
+			//while (CDC_Transmit_FS (gyro_angularvel_buffer, strlen(gyro_angularvel_buffer)) == USBD_BUSY);
 			//while (CDC_Transmit_FS ("GYRO END\n\n", 10) == USBD_BUSY);
 
 			// Add data to data buffer
@@ -776,6 +777,24 @@ int main(void)
 			last_i = last_i + sizeof(gps_buffer);
 			gps_last_i = 0;
 
+
+			/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
+			//write gps data to SD
+			if (sd_status == FR_OK){
+				sd_result_write = f_write(&SDFile, data_buffer, strlen((char *)data_buffer), (void *)&sd_err_byteswritten);
+				last_i = 0;
+			}
+			// Sendgps data to LORA
+			if (lora_res == LORA_OK) {
+				lora_send_packet(&lora, data_buffer, sizeof(data_buffer));
+				last_i = 0;
+			}
+
+			// Comment this out once build finished
+			while (CDC_Transmit_FS (data_buffer, strlen(data_buffer)) == USBD_BUSY);
+			last_i = 0;
+
+
 		}
 
 		/// GPS /////////////////////////////////////////////////////////////////////////////////
@@ -783,13 +802,13 @@ int main(void)
 		if (gps_data_ready) {
 			// Choose the buffer from the two data buffers that is not currently being written into and print it
 			if (gps_rxBuffer == gps_rxBuffer1) {
-				while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
+				//while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
 				sprintf(gps_buffer[gps_last_i], "%s", gps_rxBuffer2);
 				gps_last_i = gps_last_i + sizeof(gps_rxBuffer2);
 
 			}
 			else {
-				while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
+				//while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
 				sprintf(gps_buffer[gps_last_i], "%s", gps_rxBuffer1);
 				gps_last_i = gps_last_i + sizeof(gps_rxBuffer1);
 			}
@@ -798,18 +817,6 @@ int main(void)
 			gps_data_ready ^= 1;
 			gps_send_ready |= 1;
 
-		}
-
-		/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
-		//write gps data to SD
-		if (sd_status == FR_OK){
-			sd_result_write = f_write(&SDFile, data_buffer, strlen((char *)data_buffer), (void *)&sd_err_byteswritten);
-			last_i = 0;
-		}
-		// Sendgps data to LORA
-		if (lora_res == LORA_OK) {
-			lora_send_packet(&lora, data_buffer, sizeof(data_buffer));
-			last_i = 0;
 		}
 
 
