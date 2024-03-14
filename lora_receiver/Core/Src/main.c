@@ -236,7 +236,7 @@ int main(void)
 	static uint8_t USB_PING = 0x08;
 	static uint8_t USB_FLIGHTMODE = 0x09;
 
-	uint8_t lora_Rx_buffer[64];
+	uint8_t lora_Rx_buffer[1000];
 	uint8_t lora_error;
 
 	/* USER CODE END 1 */
@@ -289,7 +289,7 @@ int main(void)
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
-	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
+	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_435);
 	if (lora_res != LORA_OK) {
 		// Initialization failed
 		while (CDC_Transmit_FS ("LORA INIT NOT OK!\n", 18) == USBD_BUSY);
@@ -303,6 +303,7 @@ int main(void)
 		// All good
 		while (CDC_Transmit_FS ("LORA OK!\n", 9) == USBD_BUSY);
 	}
+	lora_mode_receive_continuous(&lora);
 
 	/// LoRa test send /////////////////////////////////////////////////////////////////////////////////
 

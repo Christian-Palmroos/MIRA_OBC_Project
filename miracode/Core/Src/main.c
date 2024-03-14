@@ -385,7 +385,7 @@ int main(void)
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
-	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_US);
+	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_435);
 	if (lora_res != LORA_OK) {
 		// Initialization failed
 		while (CDC_Transmit_FS ("LORA INIT NOT OK!\n", 18) == USBD_BUSY);
@@ -569,7 +569,7 @@ int main(void)
 	/* USER CODE BEGIN WHILE */
 
 	// Have a timer to break the USB loop in case of power cycle
-	tick = 100;
+	tick = 600;
 
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
@@ -579,6 +579,7 @@ int main(void)
 
 		// 10s grace timer
 		if (tick < 1) {break;}
+		tick = 600;
 
 		// if something through USB is received (toggled by interrupt in CDC)
 		if (usb_Rx_ready != 0){
@@ -681,7 +682,6 @@ int main(void)
 			else if (usb_Rx_buffer[1] == USB_PING) {
 
 				while (CDC_Transmit_FS ("PONG", 4) == USBD_BUSY);
-				//break;
 			}
 		}
 	}
@@ -708,8 +708,6 @@ int main(void)
 			sprintf(system_time_buffer, "time: %.0f s\n", system_time_counter);
 
 			//while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
-//			sprintf(data_buffer[last_i], "%"PRId8, system_time_buffer);
-//			last_i = last_i + sizeof(system_time_buffer);
 			add_to_buffer(&data_buffer, &system_time_buffer, strlen(system_time_buffer));
 
 			system_time_counter++;
@@ -739,24 +737,15 @@ int main(void)
 			bmp_result = bmp3_get_status(&bmp_status, &bmp_device);
 			bmp3_check_rslt("bmp3_get_status", bmp_result);
 
-
 			// Print bmp measurements
 			sprintf(bmp_temperature_buffer, "%.2f\n", bmp_data.temperature);
 			sprintf(bmp_pressure_buffer, "%.2f\n", bmp_data.pressure);
 
-			// Add data to data buffer
-//			sprintf(data_buffer[last_i], "%"PRId8, bmp_temperature_buffer);
-//			last_i = last_i + sizeof(bmp_temperature_buffer);
-//			sprintf(data_buffer[last_i], "%"PRId8, bmp_pressure_buffer);
-//			last_i = last_i + sizeof(bmp_pressure_buffer);
-
 			add_to_buffer(&data_buffer, &bmp_temperature_buffer, strlen(bmp_temperature_buffer));
 			add_to_buffer(&data_buffer, &bmp_pressure_buffer, strlen(bmp_pressure_buffer));
 
-			//while (CDC_Transmit_FS ("\nBMP390 END\n", 12) == USBD_BUSY);
 			//while (CDC_Transmit_FS (bmp_temperature_buffer, strlen(bmp_temperature_buffer)) == USBD_BUSY);
 			//while (CDC_Transmit_FS (bmp_pressure_buffer, strlen(bmp_pressure_buffer)) == USBD_BUSY);
-			//while (CDC_Transmit_FS ("BMP390 END\n\n", 12) == USBD_BUSY);
 
 
 			/// Gyro /////////////////////////////////////////////////////////////////////////////////
@@ -770,16 +759,8 @@ int main(void)
 			add_to_buffer(&data_buffer, &gyro_acceleration_buffer, strlen(gyro_acceleration_buffer));
 			add_to_buffer(&data_buffer, &gyro_angularvel_buffer, strlen(gyro_angularvel_buffer));
 			// Print gyro measurements
-			//while (CDC_Transmit_FS ("GYRO START\n", 11) == USBD_BUSY);
 			//while (CDC_Transmit_FS (gyro_acceleration_buffer, strlen(gyro_acceleration_buffer)) == USBD_BUSY);
 			//while (CDC_Transmit_FS (gyro_angularvel_buffer, strlen(gyro_angularvel_buffer)) == USBD_BUSY);
-			//while (CDC_Transmit_FS ("GYRO END\n\n", 10) == USBD_BUSY);
-
-			// Add data to data buffer
-//			sprintf(data_buffer[last_i], "%"PRId8, gyro_acceleration_buffer);
-//			last_i = last_i + sizeof(gyro_acceleration_buffer);
-//			sprintf(data_buffer[last_i], "%"PRId8, gyro_angularvel_buffer);
-//			last_i = last_i + sizeof(gyro_angularvel_buffer);
 
 
 			/// MIRA /////////////////////////////////////////////////////////////////////////////////
@@ -803,9 +784,6 @@ int main(void)
 
 			/// GPS DATA /////////////////////////////////////////////////////////////////////////////////
 			// Add gathered GPS data to data buffer
-//			sprintf(data_buffer[last_i], "%"PRId8, gps_buffer);
-//			last_i = last_i + sizeof(gps_buffer);
-//			gps_last_i = 0;
 			add_to_buffer(&data_buffer, &gps_buffer, strlen(gps_buffer));
 			gps_buffer[0] = '\0';
 
@@ -833,17 +811,11 @@ int main(void)
 			// Choose the buffer from the two data buffers that is not currently being written into and print it
 			if (gps_rxBuffer == gps_rxBuffer1) {
 				//while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
-//				sprintf(gps_buffer[gps_last_i], "%"PRId8, gps_rxBuffer2);
-//				gps_last_i = gps_last_i + sizeof(gps_rxBuffer2);
-
 				add_to_buffer(&gps_buffer, &gps_rxBuffer2, strlen(gps_rxBuffer2));
 
 			}
 			else {
 				//while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
-//				sprintf(gps_buffer[gps_last_i], "%"PRId8, gps_rxBuffer1);
-//				gps_last_i = gps_last_i + sizeof(gps_rxBuffer1);
-
 				add_to_buffer(&gps_buffer, &gps_rxBuffer1, strlen(gps_rxBuffer1));
 			}
 

@@ -78,9 +78,9 @@ def main():
             response = ser.readline().decode('latin-1')
             print("Response:", response)
             
-            if response.startswith("OK"):
+            #if response.startswith("OK"):
                 # Check that the datafile exists for writing
-                break
+            break
             
             
         elif userinput == "ping":

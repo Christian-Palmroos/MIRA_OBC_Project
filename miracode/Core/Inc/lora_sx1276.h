@@ -12,9 +12,10 @@
 #define MHZ                                1000000LLU
 #define LORA_BASE_FREQUENCY_US             (915LLU*MHZ)
 #define LORA_BASE_FREQUENCY_EU             (868LLU*MHZ)
+#define LORA_BASE_FREQUENCY_435            (435LLU*MHZ)
 
 // Default settings
-#define LORA_DEFAULT_TX_POWER              17
+#define LORA_DEFAULT_TX_POWER              2
 #define LORA_DEFAULT_SF                    7
 #define LORA_DEFAULT_PREAMBLE_LEN          10
 #define LORA_DEFAULT_RX_ADDR               0
