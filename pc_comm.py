@@ -1,4 +1,5 @@
 import serial
+import glob
 import time
 import os
 
@@ -11,19 +12,29 @@ print()
 echo_switch = False
 
 # Find the Virtual Com Port the device is under
-found = False
-i = 0
-while not found:
-    if i > 20:
-        raise Exception("Device not found under /dev/ttyACMx!")
+def find_ports():
+    ports = glob.glob('/dev/ttyACM[0-9]*')
+
+    res = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            res.append(port)
+        except:
+            pass
+    return res
+
+setup = False
+while not setup:
+    print(find_ports())
+    userinput = input("Which of these devices would you like to connect to (answer with index of ACM only, e.g., 0)?    ")
     try:
-        ser = serial.Serial(f'/dev/ttyACM{i%10}', 115200, timeout = 2, write_timeout = 5)
-        print(f'Device found at /dev/ttyACM{i%10}')
-        found = True
+        ser = serial.Serial(f'/dev/ttyACM{userinput}', 115200, timeout = 2, write_timeout = 5)
+        setup = True
     except:
-        print(f'Was not /dev/ttyACM{i%10}')
-        i+=1
-        
+        print("Wrong input!")
+
 
 def main():
 
@@ -42,7 +53,6 @@ def main():
             print("Command options:")
             print("     flightmode - OBC goes to flightmode and terminates USB communication.")
             print("     ping - Pings the OBC to see if it replies.")
-            print("     readmode - Swap to USB line read-only mode.")
             print("     testlora - Tests LORA data sending.")
 
 
@@ -95,16 +105,14 @@ def main():
                 
             response = ser.readline().decode('latin-1')
             print("Response:", response)
-            
-            
-        elif userinput == "readmode":
-            print("OK, reading...")
-            while True:
-                print(ser.readline().decode('latin-1'), end = "")
         
         
         else:
             print("Not a command.")
+            
+    # Read mode
+    while True:
+        print(ser.read().decode('latin-1'), end = "")
             
     
 if __name__ == "__main__":

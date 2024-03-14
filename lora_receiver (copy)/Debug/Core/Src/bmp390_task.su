@@ -1,0 +1,3 @@
+../Core/Src/bmp390_task.c:15:6:bmp3_check_rslt	16	static
+../Core/Src/bmp390_task.c:58:20:bmp3_interface_init	24	static
+../Core/Src/bmp390_task.c:95:6:StartBMP390Task	264	static

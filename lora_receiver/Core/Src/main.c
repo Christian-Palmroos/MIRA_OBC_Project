@@ -338,17 +338,18 @@ int main(void)
 		while (usb_Rx_ready == 0);
 		usb_Rx_ready = 0;
 
-		if (usb_Rx_buffer[0] == USB_LORA) {
-			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
+		if (usb_Rx_buffer[1] == USB_LORA) {
+			if (usb_Rx_buffer[0] == USB_CHECKSTATUS) {
 
 			}
 			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
-				lora_res = lora_send_packet(&lora, &lora_test_packet, sizeof(lora_test_packet));
+				lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 2000, &lora_error);
 				if (lora_res != LORA_OK) {
-					while (CDC_Transmit_FS ("\nERROR!\n", sizeof("\nERROR!\n")) == USBD_BUSY);
+					while (CDC_Transmit_FS ("ERROR!\n", sizeof("ERROR!\n")) == USBD_BUSY);
 				}
 				else {
-					while (CDC_Transmit_FS ("\nLora packet sent!\n", sizeof("\nLora packet sent!\n")) == USBD_BUSY);
+					while (CDC_Transmit_FS ("Lora packet received!\n", sizeof("Lora packet received!\n")) == USBD_BUSY);
+					while (CDC_Transmit_FS (lora_Rx_buffer, sizeof(lora_Rx_buffer)) == USBD_BUSY);
 				}
 
 			}
@@ -364,13 +365,13 @@ int main(void)
 				if (tick == 0) {
 					tick = 10;
 					while (tick != 0);
-					while (CDC_Transmit_FS ("\nTick works!\n", 13) == USBD_BUSY);
+					while (CDC_Transmit_FS ("Tick works!\n", 13) == USBD_BUSY);
 				}
 
 				if (tickGPS == 0) {
 					tickGPS = 10;
 					while (tickGPS != 0);
-					while (CDC_Transmit_FS ("\nGPStick works!\n", 16) == USBD_BUSY);
+					while (CDC_Transmit_FS ("GPStick works!\n", 16) == USBD_BUSY);
 				}
 			}
 
@@ -403,7 +404,7 @@ int main(void)
 	{
 
 
-		lora_res = lora_receive_packet(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), &lora_error);
+		lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 1000, &lora_error);
 		while (CDC_Transmit_FS (lora_Rx_buffer, sizeof(lora_Rx_buffer)) == USBD_BUSY);
 		/* USER CODE END WHILE */
 
