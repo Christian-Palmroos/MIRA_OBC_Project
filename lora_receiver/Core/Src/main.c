@@ -236,7 +236,7 @@ int main(void)
 	static uint8_t USB_PING = 0x08;
 	static uint8_t USB_FLIGHTMODE = 0x09;
 
-	uint8_t lora_Rx_buffer[1000];
+	uint8_t lora_Rx_buffer[LORA_MAX_PACKET_SIZE];
 	uint8_t lora_error;
 
 	/* USER CODE END 1 */
@@ -406,7 +406,7 @@ int main(void)
 
 
 		lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 1000, &lora_error);
-		while (CDC_Transmit_FS (lora_Rx_buffer, sizeof(lora_Rx_buffer)) == USBD_BUSY);
+		while (CDC_Transmit_FS (lora_Rx_buffer, strlen(lora_Rx_buffer)) == USBD_BUSY);
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */

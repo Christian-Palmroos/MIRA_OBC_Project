@@ -191,6 +191,20 @@ void add_to_buffer(uint8_t* data_buffer, uint8_t* data, int size) {
 
 }
 
+
+
+
+//int parse_comma_delimited_str(char *string, char **fields, int max_fields)
+//{
+//   int i = 0;
+//   fields[i++] = string;
+//   while ((i < max_fields) && NULL != (string = strchr(string, ','))) {
+//      *string = '\0';
+//      fields[i++] = ++string;
+//   }
+//   return --i;
+//}
+
 //void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 //		HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
 //		HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
@@ -219,11 +233,16 @@ int main(void)
 	FRESULT sd_status;
 
 	// Buffer for all data to be stored into in the same way as it has been printed to the PC
-	uint8_t data_buffer[1000];
-	data_buffer[0] = '\0';
+	uint8_t data_buffer[LORA_MAX_PACKET_SIZE]; //LORA_MAX_PACKET_SIZE
 
 	uint8_t gps_buffer[1000];
+	char *gps_buffer_ptr1 = gps_buffer;
+	char *gps_buffer_ptr2 = gps_buffer;
+	uint8_t gps_parsed_buffer[1000];
+	int parser_i;
+	int parser_sub_i;
 	gps_buffer[0] = '\0';
+	gps_parsed_buffer[0] = '\0';
 
 	// For GPS Module
 	//HAL_StatusTypeDef UART2_Rx_STATUS;
@@ -368,7 +387,7 @@ int main(void)
 	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
 
 	// WAIT FOR USB CONNECTION
-	HAL_Delay(8000);
+	HAL_Delay(1000);
 	while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY);
 
 	// Run test sequence for MIRA
@@ -539,7 +558,7 @@ int main(void)
 
 	// Start timers
 	HAL_TIM_Base_Start_IT(&htim17);
-	tick = 0;
+	tick = 600;
 	tickGPS = 0;
 
 
@@ -577,14 +596,13 @@ int main(void)
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	while (1) {
 
-		// 10s grace timer
-		if (tick < 1) {break;}
-		tick = 600;
+		// 60s grace timer
+		if (tick == 0) {break;}
 
 		// if something through USB is received (toggled by interrupt in CDC)
 		if (usb_Rx_ready != 0){
 
-			tick = 0;
+			tick = 600;
 			usb_Rx_ready = 0;
 
 			if (usb_Rx_buffer[0] == USB_MIRA) {
@@ -705,7 +723,7 @@ int main(void)
 
 			/// TIMER /////////////////////////////////////////////////////////////////////////////////
 			// Print current time
-			sprintf(system_time_buffer, "time: %.0f s\n", system_time_counter);
+			sprintf(system_time_buffer, "t:%.0f\n", system_time_counter);
 
 			//while (CDC_Transmit_FS (system_time_buffer, strlen(system_time_buffer)) == USBD_BUSY);
 			add_to_buffer(&data_buffer, &system_time_buffer, strlen(system_time_buffer));
@@ -753,8 +771,8 @@ int main(void)
 			gyro_result_acceleration = LSM6DSO_ACC_GetAxes (&gyro_device, &gyro_acceleration_object);
 			gyro_result_angularvel = LSM6DSO_GYRO_GetAxes (&gyro_device, &gyro_angularvel_object);
 
-			sprintf(gyro_acceleration_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_acceleration_object.x, gyro_acceleration_object.y, gyro_acceleration_object.z);
-			sprintf(gyro_angularvel_buffer, "%"PRId32"   %"PRId32"   %"PRId32"\n", gyro_angularvel_object.x, gyro_angularvel_object.y, gyro_angularvel_object.z);
+			sprintf(gyro_acceleration_buffer, "%"PRId32",%"PRId32",%"PRId32"\n", gyro_acceleration_object.x, gyro_acceleration_object.y, gyro_acceleration_object.z);
+			sprintf(gyro_angularvel_buffer, "%"PRId32",%"PRId32",%"PRId32"\n", gyro_angularvel_object.x, gyro_angularvel_object.y, gyro_angularvel_object.z);
 
 			add_to_buffer(&data_buffer, &gyro_acceleration_buffer, strlen(gyro_acceleration_buffer));
 			add_to_buffer(&data_buffer, &gyro_angularvel_buffer, strlen(gyro_angularvel_buffer));
@@ -784,7 +802,44 @@ int main(void)
 
 			/// GPS DATA /////////////////////////////////////////////////////////////////////////////////
 			// Add gathered GPS data to data buffer
-			add_to_buffer(&data_buffer, &gps_buffer, strlen(gps_buffer));
+
+//			while (NULL != (gps_buffer_ptr = strchr(*gps_buffer_ptr, ','))) {
+//				add_to_buffer(&gps_parsed_buffer, gps_buffer_ptr, strlen(gps_buffer_ptr));
+//				*gps_buffer_ptr = '\0';
+//			      gps_buffer_ptr++;
+//			}
+//			for (parser_i = 1; parser_i < 10; parser_i++) {
+//				gps_buffer_ptr1 = strchr(*gps_buffer_ptr1, ',');
+//				*gps_buffer_ptr1 = '\0';
+//				gps_buffer_ptr1++;
+//				if ((parser_i == 1) || (parser_i == 2) || (parser_i == 4) || (parser_i == 9)) {
+//					add_to_buffer(&data_buffer, gps_buffer_ptr2, strlen(gps_buffer_ptr2));
+//					sprintf(data_buffer + strlen(data_buffer), "\n");
+//				}
+//				gps_buffer_ptr2 = gps_buffer_ptr1;
+//
+//			}
+
+
+			//add_to_buffer(&data_buffer, &gps_buffer, strlen(gps_buffer));
+			char *token;
+			char *gps_buffer_copy = strdup(gps_buffer);
+
+			parser_i = 0;
+			token = strtok(strstr(gps_buffer_copy, "$GNGGA"), ",");
+			while (token != NULL && parser_i < 10) {
+			    if ((parser_i == 1) || (parser_i == 2) || (parser_i == 4) || (parser_i == 9)) {
+			        add_to_buffer(&data_buffer, token, strlen(token));
+			        strcat(data_buffer, ",");
+			    }
+			    token = strtok(NULL, ",");
+			    parser_i++;
+			}
+			strcat(data_buffer, "\n");
+
+			free(gps_buffer_copy); // Free the memory allocated for the copy
+			free(token);
+
 			gps_buffer[0] = '\0';
 
 

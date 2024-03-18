@@ -47,7 +47,7 @@ def main():
 
     start = time.time()
     print("Emptying queue...")
-    while time.time()-start < 10:
+    while time.time()-start < 3:
         print(ser.readline().decode('latin-1'), end = "")
 
     while True:

@@ -27,27 +27,27 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0003035c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0002b91d  00000000  00000000  0003038c  2**0
+ 12 .debug_info   0002b93e  00000000  00000000  0003038c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 000057b5  00000000  00000000  0005bca9  2**0
+ 13 .debug_abbrev 000057ac  00000000  00000000  0005bcca  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00002308  00000000  00000000  00061460  2**3
+ 14 .debug_aranges 00002308  00000000  00000000  00061478  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 000020c0  00000000  00000000  00063768  2**3
+ 15 .debug_ranges 000020c0  00000000  00000000  00063780  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0000837e  00000000  00000000  00065828  2**0
+ 16 .debug_macro  0000837e  00000000  00000000  00065840  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0002c874  00000000  00000000  0006dba6  2**0
+ 17 .debug_line   0002c87b  00000000  00000000  0006dbbe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0011c6a0  00000000  00000000  0009a41a  2**0
+ 18 .debug_str    0011c6a6  00000000  00000000  0009a439  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  001b6aba  2**0
+ 19 .comment      00000050  00000000  00000000  001b6adf  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  0000a5f8  00000000  00000000  001b6b0c  2**2
+ 20 .debug_frame  0000a5f8  00000000  00000000  001b6b30  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .stab         000000cc  00000000  00000000  001c1104  2**2
+ 21 .stab         000000cc  00000000  00000000  001c1128  2**2
                   CONTENTS, READONLY, DEBUGGING
- 22 .stabstr      000001b9  00000000  00000000  001c11d0  2**0
+ 22 .stabstr      000001b9  00000000  00000000  001c11f4  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -3029,449 +3029,452 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
 int main(void)
 {
  8001950:	b580      	push	{r7, lr}
- 8001952:	f5ad 6d87 	sub.w	sp, sp, #1080	; 0x438
- 8001956:	af02      	add	r7, sp, #8
+ 8001952:	b0a4      	sub	sp, #144	; 0x90
+ 8001954:	af02      	add	r7, sp, #8
 	lora_sx1276 lora;
 
 
 	// Time progress tracking using tick
 	double system_time_counter;
 	system_time_counter = 0;
- 8001958:	f04f 0200 	mov.w	r2, #0
- 800195c:	f04f 0300 	mov.w	r3, #0
- 8001960:	f507 6185 	add.w	r1, r7, #1064	; 0x428
- 8001964:	e9c1 2300 	strd	r2, r3, [r1]
+ 8001956:	f04f 0200 	mov.w	r2, #0
+ 800195a:	f04f 0300 	mov.w	r3, #0
+ 800195e:	e9c7 2320 	strd	r2, r3, [r7, #128]	; 0x80
 	uint8_t system_time_buffer[25] = {0};
- 8001968:	2300      	movs	r3, #0
- 800196a:	f8c7 33f0 	str.w	r3, [r7, #1008]	; 0x3f0
- 800196e:	f507 737d 	add.w	r3, r7, #1012	; 0x3f4
- 8001972:	2200      	movs	r2, #0
- 8001974:	601a      	str	r2, [r3, #0]
- 8001976:	605a      	str	r2, [r3, #4]
- 8001978:	609a      	str	r2, [r3, #8]
- 800197a:	60da      	str	r2, [r3, #12]
- 800197c:	611a      	str	r2, [r3, #16]
- 800197e:	751a      	strb	r2, [r3, #20]
+ 8001962:	2300      	movs	r3, #0
+ 8001964:	64bb      	str	r3, [r7, #72]	; 0x48
+ 8001966:	f107 034c 	add.w	r3, r7, #76	; 0x4c
+ 800196a:	2200      	movs	r2, #0
+ 800196c:	601a      	str	r2, [r3, #0]
+ 800196e:	605a      	str	r2, [r3, #4]
+ 8001970:	609a      	str	r2, [r3, #8]
+ 8001972:	60da      	str	r2, [r3, #12]
+ 8001974:	611a      	str	r2, [r3, #16]
+ 8001976:	751a      	strb	r2, [r3, #20]
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
- 8001980:	f001 f825 	bl	80029ce <HAL_Init>
+ 8001978:	f001 f829 	bl	80029ce <HAL_Init>
 
 	/* USER CODE BEGIN Init */
 
 	// Initialize HAL for UART interrupts
 	HAL_MspInit();
- 8001984:	f000 fcb4 	bl	80022f0 <HAL_MspInit>
+ 800197c:	f000 fcb8 	bl	80022f0 <HAL_MspInit>
 	// Initialize I2C2 with custom driver
 	BSP_I2C2_Init();
- 8001988:	f7ff faa8 	bl	8000edc <BSP_I2C2_Init>
+ 8001980:	f7ff faac 	bl	8000edc <BSP_I2C2_Init>
 
 	//Initialize Msp for both UARTs
 	HAL_UART_MspInit(&huart1);
- 800198c:	48a6      	ldr	r0, [pc, #664]	; (8001c28 <main+0x2d8>)
- 800198e:	f000 fe17 	bl	80025c0 <HAL_UART_MspInit>
+ 8001984:	48a8      	ldr	r0, [pc, #672]	; (8001c28 <main+0x2d8>)
+ 8001986:	f000 fe1b 	bl	80025c0 <HAL_UART_MspInit>
 	HAL_UART_MspInit(&huart2);
- 8001992:	48a6      	ldr	r0, [pc, #664]	; (8001c2c <main+0x2dc>)
- 8001994:	f000 fe14 	bl	80025c0 <HAL_UART_MspInit>
+ 800198a:	48a8      	ldr	r0, [pc, #672]	; (8001c2c <main+0x2dc>)
+ 800198c:	f000 fe18 	bl	80025c0 <HAL_UART_MspInit>
 
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
 	SystemClock_Config();
- 8001998:	f000 f97c 	bl	8001c94 <SystemClock_Config>
+ 8001990:	f000 f980 	bl	8001c94 <SystemClock_Config>
 	/* USER CODE BEGIN SysInit */
 
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
- 800199c:	f000 fbce 	bl	800213c <MX_GPIO_Init>
+ 8001994:	f000 fbd2 	bl	800213c <MX_GPIO_Init>
 	MX_DMA_Init();
- 80019a0:	f000 fba8 	bl	80020f4 <MX_DMA_Init>
+ 8001998:	f000 fbac 	bl	80020f4 <MX_DMA_Init>
 	MX_I2C1_Init();
- 80019a4:	f000 f9f4 	bl	8001d90 <MX_I2C1_Init>
+ 800199c:	f000 f9f8 	bl	8001d90 <MX_I2C1_Init>
 	MX_SDMMC1_SD_Init();
- 80019a8:	f000 fa32 	bl	8001e10 <MX_SDMMC1_SD_Init>
+ 80019a0:	f000 fa36 	bl	8001e10 <MX_SDMMC1_SD_Init>
 	MX_SPI1_Init();
- 80019ac:	f000 fa52 	bl	8001e54 <MX_SPI1_Init>
+ 80019a4:	f000 fa56 	bl	8001e54 <MX_SPI1_Init>
 	MX_USART1_UART_Init();
- 80019b0:	f000 fb04 	bl	8001fbc <MX_USART1_UART_Init>
+ 80019a8:	f000 fb08 	bl	8001fbc <MX_USART1_UART_Init>
 	MX_USART2_UART_Init();
- 80019b4:	f000 fb4e 	bl	8002054 <MX_USART2_UART_Init>
+ 80019ac:	f000 fb52 	bl	8002054 <MX_USART2_UART_Init>
 	MX_FATFS_Init();
- 80019b8:	f00d f97a 	bl	800ecb0 <MX_FATFS_Init>
+ 80019b0:	f00d f97e 	bl	800ecb0 <MX_FATFS_Init>
 	MX_USB_DEVICE_Init();
- 80019bc:	f00f f802 	bl	80109c4 <MX_USB_DEVICE_Init>
+ 80019b4:	f00f f806 	bl	80109c4 <MX_USB_DEVICE_Init>
 	MX_TIM17_Init();
- 80019c0:	f000 fa86 	bl	8001ed0 <MX_TIM17_Init>
+ 80019b8:	f000 fa8a 	bl	8001ed0 <MX_TIM17_Init>
 
 	/* Initialize interrupts */
 	MX_NVIC_Init();
- 80019c4:	f000 f9b8 	bl	8001d38 <MX_NVIC_Init>
+ 80019bc:	f000 f9bc 	bl	8001d38 <MX_NVIC_Init>
 	/* USER CODE BEGIN 2 */
 
 
 	// WAIT FOR USB CONNECTION
 	HAL_Delay(8000);
- 80019c8:	f44f 50fa 	mov.w	r0, #8000	; 0x1f40
- 80019cc:	f001 f874 	bl	8002ab8 <HAL_Delay>
+ 80019c0:	f44f 50fa 	mov.w	r0, #8000	; 0x1f40
+ 80019c4:	f001 f878 	bl	8002ab8 <HAL_Delay>
 	while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY);
- 80019d0:	bf00      	nop
- 80019d2:	2106      	movs	r1, #6
- 80019d4:	4896      	ldr	r0, [pc, #600]	; (8001c30 <main+0x2e0>)
- 80019d6:	f00f f8c3 	bl	8010b60 <CDC_Transmit_FS>
- 80019da:	4603      	mov	r3, r0
- 80019dc:	2b01      	cmp	r3, #1
- 80019de:	d0f8      	beq.n	80019d2 <main+0x82>
+ 80019c8:	bf00      	nop
+ 80019ca:	2106      	movs	r1, #6
+ 80019cc:	4898      	ldr	r0, [pc, #608]	; (8001c30 <main+0x2e0>)
+ 80019ce:	f00f f8c7 	bl	8010b60 <CDC_Transmit_FS>
+ 80019d2:	4603      	mov	r3, r0
+ 80019d4:	2b01      	cmp	r3, #1
+ 80019d6:	d0f8      	beq.n	80019ca <main+0x7a>
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
 	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_435);
- 80019e0:	f207 400c 	addw	r0, r7, #1036	; 0x40c
- 80019e4:	a38e      	add	r3, pc, #568	; (adr r3, 8001c20 <main+0x2d0>)
- 80019e6:	e9d3 2300 	ldrd	r2, r3, [r3]
- 80019ea:	e9cd 2300 	strd	r2, r3, [sp]
- 80019ee:	2320      	movs	r3, #32
- 80019f0:	4a90      	ldr	r2, [pc, #576]	; (8001c34 <main+0x2e4>)
- 80019f2:	4991      	ldr	r1, [pc, #580]	; (8001c38 <main+0x2e8>)
- 80019f4:	f7ff ff4c 	bl	8001890 <lora_init>
- 80019f8:	4603      	mov	r3, r0
- 80019fa:	f887 3427 	strb.w	r3, [r7, #1063]	; 0x427
+ 80019d8:	f107 0064 	add.w	r0, r7, #100	; 0x64
+ 80019dc:	a390      	add	r3, pc, #576	; (adr r3, 8001c20 <main+0x2d0>)
+ 80019de:	e9d3 2300 	ldrd	r2, r3, [r3]
+ 80019e2:	e9cd 2300 	strd	r2, r3, [sp]
+ 80019e6:	2320      	movs	r3, #32
+ 80019e8:	4a92      	ldr	r2, [pc, #584]	; (8001c34 <main+0x2e4>)
+ 80019ea:	4993      	ldr	r1, [pc, #588]	; (8001c38 <main+0x2e8>)
+ 80019ec:	f7ff ff50 	bl	8001890 <lora_init>
+ 80019f0:	4603      	mov	r3, r0
+ 80019f2:	f887 307f 	strb.w	r3, [r7, #127]	; 0x7f
 	if (lora_res != LORA_OK) {
- 80019fe:	f897 3427 	ldrb.w	r3, [r7, #1063]	; 0x427
- 8001a02:	2b00      	cmp	r3, #0
- 8001a04:	d007      	beq.n	8001a16 <main+0xc6>
+ 80019f6:	f897 307f 	ldrb.w	r3, [r7, #127]	; 0x7f
+ 80019fa:	2b00      	cmp	r3, #0
+ 80019fc:	d007      	beq.n	8001a0e <main+0xbe>
 		// Initialization failed
 		while (CDC_Transmit_FS ("LORA INIT NOT OK!\n", 18) == USBD_BUSY);
- 8001a06:	bf00      	nop
- 8001a08:	2112      	movs	r1, #18
- 8001a0a:	488c      	ldr	r0, [pc, #560]	; (8001c3c <main+0x2ec>)
- 8001a0c:	f00f f8a8 	bl	8010b60 <CDC_Transmit_FS>
- 8001a10:	4603      	mov	r3, r0
- 8001a12:	2b01      	cmp	r3, #1
- 8001a14:	d0f8      	beq.n	8001a08 <main+0xb8>
+ 80019fe:	bf00      	nop
+ 8001a00:	2112      	movs	r1, #18
+ 8001a02:	488e      	ldr	r0, [pc, #568]	; (8001c3c <main+0x2ec>)
+ 8001a04:	f00f f8ac 	bl	8010b60 <CDC_Transmit_FS>
+ 8001a08:	4603      	mov	r3, r0
+ 8001a0a:	2b01      	cmp	r3, #1
+ 8001a0c:	d0f8      	beq.n	8001a00 <main+0xb0>
 	}
 	lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
- 8001a16:	f207 430c 	addw	r3, r7, #1036	; 0x40c
- 8001a1a:	2204      	movs	r2, #4
- 8001a1c:	4988      	ldr	r1, [pc, #544]	; (8001c40 <main+0x2f0>)
- 8001a1e:	4618      	mov	r0, r3
- 8001a20:	f7ff fe4d 	bl	80016be <lora_send_packet>
- 8001a24:	4603      	mov	r3, r0
- 8001a26:	f887 3427 	strb.w	r3, [r7, #1063]	; 0x427
+ 8001a0e:	f107 0364 	add.w	r3, r7, #100	; 0x64
+ 8001a12:	2204      	movs	r2, #4
+ 8001a14:	498a      	ldr	r1, [pc, #552]	; (8001c40 <main+0x2f0>)
+ 8001a16:	4618      	mov	r0, r3
+ 8001a18:	f7ff fe51 	bl	80016be <lora_send_packet>
+ 8001a1c:	4603      	mov	r3, r0
+ 8001a1e:	f887 307f 	strb.w	r3, [r7, #127]	; 0x7f
 	if (lora_res != LORA_OK) {
- 8001a2a:	f897 3427 	ldrb.w	r3, [r7, #1063]	; 0x427
- 8001a2e:	2b00      	cmp	r3, #0
- 8001a30:	d007      	beq.n	8001a42 <main+0xf2>
+ 8001a22:	f897 307f 	ldrb.w	r3, [r7, #127]	; 0x7f
+ 8001a26:	2b00      	cmp	r3, #0
+ 8001a28:	d007      	beq.n	8001a3a <main+0xea>
 		// Send failed
 		while (CDC_Transmit_FS ("LORA SEND NOT OK!\n", 18) == USBD_BUSY);
- 8001a32:	bf00      	nop
- 8001a34:	2112      	movs	r1, #18
- 8001a36:	4883      	ldr	r0, [pc, #524]	; (8001c44 <main+0x2f4>)
- 8001a38:	f00f f892 	bl	8010b60 <CDC_Transmit_FS>
- 8001a3c:	4603      	mov	r3, r0
- 8001a3e:	2b01      	cmp	r3, #1
- 8001a40:	d0f8      	beq.n	8001a34 <main+0xe4>
+ 8001a2a:	bf00      	nop
+ 8001a2c:	2112      	movs	r1, #18
+ 8001a2e:	4885      	ldr	r0, [pc, #532]	; (8001c44 <main+0x2f4>)
+ 8001a30:	f00f f896 	bl	8010b60 <CDC_Transmit_FS>
+ 8001a34:	4603      	mov	r3, r0
+ 8001a36:	2b01      	cmp	r3, #1
+ 8001a38:	d0f8      	beq.n	8001a2c <main+0xdc>
 	}
 	if (lora_res == LORA_OK) {
- 8001a42:	f897 3427 	ldrb.w	r3, [r7, #1063]	; 0x427
- 8001a46:	2b00      	cmp	r3, #0
- 8001a48:	d107      	bne.n	8001a5a <main+0x10a>
+ 8001a3a:	f897 307f 	ldrb.w	r3, [r7, #127]	; 0x7f
+ 8001a3e:	2b00      	cmp	r3, #0
+ 8001a40:	d107      	bne.n	8001a52 <main+0x102>
 		// All good
 		while (CDC_Transmit_FS ("LORA OK!\n", 9) == USBD_BUSY);
- 8001a4a:	bf00      	nop
- 8001a4c:	2109      	movs	r1, #9
- 8001a4e:	487e      	ldr	r0, [pc, #504]	; (8001c48 <main+0x2f8>)
- 8001a50:	f00f f886 	bl	8010b60 <CDC_Transmit_FS>
- 8001a54:	4603      	mov	r3, r0
- 8001a56:	2b01      	cmp	r3, #1
- 8001a58:	d0f8      	beq.n	8001a4c <main+0xfc>
+ 8001a42:	bf00      	nop
+ 8001a44:	2109      	movs	r1, #9
+ 8001a46:	4880      	ldr	r0, [pc, #512]	; (8001c48 <main+0x2f8>)
+ 8001a48:	f00f f88a 	bl	8010b60 <CDC_Transmit_FS>
+ 8001a4c:	4603      	mov	r3, r0
+ 8001a4e:	2b01      	cmp	r3, #1
+ 8001a50:	d0f8      	beq.n	8001a44 <main+0xf4>
 	}
 	lora_mode_receive_continuous(&lora);
- 8001a5a:	f207 430c 	addw	r3, r7, #1036	; 0x40c
- 8001a5e:	4618      	mov	r0, r3
- 8001a60:	f7ff fc96 	bl	8001390 <lora_mode_receive_continuous>
+ 8001a52:	f107 0364 	add.w	r3, r7, #100	; 0x64
+ 8001a56:	4618      	mov	r0, r3
+ 8001a58:	f7ff fc9a 	bl	8001390 <lora_mode_receive_continuous>
 
 
 	/// System timers Init /////////////////////////////////////////////////////////////////////////////////
 
 	// Start timers
 	HAL_TIM_Base_Start_IT(&htim17);
- 8001a64:	4879      	ldr	r0, [pc, #484]	; (8001c4c <main+0x2fc>)
- 8001a66:	f008 ff57 	bl	800a918 <HAL_TIM_Base_Start_IT>
+ 8001a5c:	487b      	ldr	r0, [pc, #492]	; (8001c4c <main+0x2fc>)
+ 8001a5e:	f008 ff5b 	bl	800a918 <HAL_TIM_Base_Start_IT>
 	tick = 0;
- 8001a6a:	4b79      	ldr	r3, [pc, #484]	; (8001c50 <main+0x300>)
- 8001a6c:	2200      	movs	r2, #0
- 8001a6e:	701a      	strb	r2, [r3, #0]
+ 8001a62:	4b7b      	ldr	r3, [pc, #492]	; (8001c50 <main+0x300>)
+ 8001a64:	2200      	movs	r2, #0
+ 8001a66:	701a      	strb	r2, [r3, #0]
 	tickGPS = 0;
- 8001a70:	4b78      	ldr	r3, [pc, #480]	; (8001c54 <main+0x304>)
- 8001a72:	2200      	movs	r2, #0
- 8001a74:	701a      	strb	r2, [r3, #0]
+ 8001a68:	4b7a      	ldr	r3, [pc, #488]	; (8001c54 <main+0x304>)
+ 8001a6a:	2200      	movs	r2, #0
+ 8001a6c:	701a      	strb	r2, [r3, #0]
 	/* USER CODE BEGIN WHILE */
 
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
- 8001a76:	2108      	movs	r1, #8
- 8001a78:	4877      	ldr	r0, [pc, #476]	; (8001c58 <main+0x308>)
- 8001a7a:	f001 fe43 	bl	8003704 <HAL_GPIO_TogglePin>
+ 8001a6e:	2108      	movs	r1, #8
+ 8001a70:	4879      	ldr	r0, [pc, #484]	; (8001c58 <main+0x308>)
+ 8001a72:	f001 fe47 	bl	8003704 <HAL_GPIO_TogglePin>
 	while (1) {
 
 		while (usb_Rx_ready == 0);
- 8001a7e:	bf00      	nop
- 8001a80:	4b76      	ldr	r3, [pc, #472]	; (8001c5c <main+0x30c>)
- 8001a82:	781b      	ldrb	r3, [r3, #0]
- 8001a84:	b2db      	uxtb	r3, r3
- 8001a86:	2b00      	cmp	r3, #0
- 8001a88:	d0fa      	beq.n	8001a80 <main+0x130>
+ 8001a76:	bf00      	nop
+ 8001a78:	4b78      	ldr	r3, [pc, #480]	; (8001c5c <main+0x30c>)
+ 8001a7a:	781b      	ldrb	r3, [r3, #0]
+ 8001a7c:	b2db      	uxtb	r3, r3
+ 8001a7e:	2b00      	cmp	r3, #0
+ 8001a80:	d0fa      	beq.n	8001a78 <main+0x128>
 		usb_Rx_ready = 0;
- 8001a8a:	4b74      	ldr	r3, [pc, #464]	; (8001c5c <main+0x30c>)
- 8001a8c:	2200      	movs	r2, #0
- 8001a8e:	701a      	strb	r2, [r3, #0]
+ 8001a82:	4b76      	ldr	r3, [pc, #472]	; (8001c5c <main+0x30c>)
+ 8001a84:	2200      	movs	r2, #0
+ 8001a86:	701a      	strb	r2, [r3, #0]
 
 		if (usb_Rx_buffer[1] == USB_LORA) {
- 8001a90:	4b73      	ldr	r3, [pc, #460]	; (8001c60 <main+0x310>)
- 8001a92:	785a      	ldrb	r2, [r3, #1]
- 8001a94:	4b73      	ldr	r3, [pc, #460]	; (8001c64 <main+0x314>)
- 8001a96:	781b      	ldrb	r3, [r3, #0]
- 8001a98:	429a      	cmp	r2, r3
- 8001a9a:	d13a      	bne.n	8001b12 <main+0x1c2>
+ 8001a88:	4b75      	ldr	r3, [pc, #468]	; (8001c60 <main+0x310>)
+ 8001a8a:	785a      	ldrb	r2, [r3, #1]
+ 8001a8c:	4b75      	ldr	r3, [pc, #468]	; (8001c64 <main+0x314>)
+ 8001a8e:	781b      	ldrb	r3, [r3, #0]
+ 8001a90:	429a      	cmp	r2, r3
+ 8001a92:	d139      	bne.n	8001b08 <main+0x1b8>
 			if (usb_Rx_buffer[0] == USB_CHECKSTATUS) {
- 8001a9c:	4b70      	ldr	r3, [pc, #448]	; (8001c60 <main+0x310>)
- 8001a9e:	781a      	ldrb	r2, [r3, #0]
- 8001aa0:	4b71      	ldr	r3, [pc, #452]	; (8001c68 <main+0x318>)
- 8001aa2:	781b      	ldrb	r3, [r3, #0]
- 8001aa4:	429a      	cmp	r2, r3
- 8001aa6:	d0ea      	beq.n	8001a7e <main+0x12e>
+ 8001a94:	4b72      	ldr	r3, [pc, #456]	; (8001c60 <main+0x310>)
+ 8001a96:	781a      	ldrb	r2, [r3, #0]
+ 8001a98:	4b73      	ldr	r3, [pc, #460]	; (8001c68 <main+0x318>)
+ 8001a9a:	781b      	ldrb	r3, [r3, #0]
+ 8001a9c:	429a      	cmp	r2, r3
+ 8001a9e:	d0ea      	beq.n	8001a76 <main+0x126>
 
 			}
 			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
- 8001aa8:	4b6d      	ldr	r3, [pc, #436]	; (8001c60 <main+0x310>)
- 8001aaa:	785a      	ldrb	r2, [r3, #1]
- 8001aac:	4b6f      	ldr	r3, [pc, #444]	; (8001c6c <main+0x31c>)
- 8001aae:	781b      	ldrb	r3, [r3, #0]
- 8001ab0:	429a      	cmp	r2, r3
- 8001ab2:	d1e4      	bne.n	8001a7e <main+0x12e>
+ 8001aa0:	4b6f      	ldr	r3, [pc, #444]	; (8001c60 <main+0x310>)
+ 8001aa2:	785a      	ldrb	r2, [r3, #1]
+ 8001aa4:	4b71      	ldr	r3, [pc, #452]	; (8001c6c <main+0x31c>)
+ 8001aa6:	781b      	ldrb	r3, [r3, #0]
+ 8001aa8:	429a      	cmp	r2, r3
+ 8001aaa:	d1e4      	bne.n	8001a76 <main+0x126>
 				lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 2000, &lora_error);
- 8001ab4:	f107 0108 	add.w	r1, r7, #8
- 8001ab8:	f207 400c 	addw	r0, r7, #1036	; 0x40c
- 8001abc:	1dfb      	adds	r3, r7, #7
- 8001abe:	9300      	str	r3, [sp, #0]
- 8001ac0:	f44f 63fa 	mov.w	r3, #2000	; 0x7d0
- 8001ac4:	22e8      	movs	r2, #232	; 0xe8
- 8001ac6:	f7ff feae 	bl	8001826 <lora_receive_packet_blocking>
- 8001aca:	4603      	mov	r3, r0
- 8001acc:	f887 3427 	strb.w	r3, [r7, #1063]	; 0x427
+ 8001aac:	f107 0108 	add.w	r1, r7, #8
+ 8001ab0:	f107 0064 	add.w	r0, r7, #100	; 0x64
+ 8001ab4:	1dfb      	adds	r3, r7, #7
+ 8001ab6:	9300      	str	r3, [sp, #0]
+ 8001ab8:	f44f 63fa 	mov.w	r3, #2000	; 0x7d0
+ 8001abc:	2240      	movs	r2, #64	; 0x40
+ 8001abe:	f7ff feb2 	bl	8001826 <lora_receive_packet_blocking>
+ 8001ac2:	4603      	mov	r3, r0
+ 8001ac4:	f887 307f 	strb.w	r3, [r7, #127]	; 0x7f
 				if (lora_res != LORA_OK) {
- 8001ad0:	f897 3427 	ldrb.w	r3, [r7, #1063]	; 0x427
- 8001ad4:	2b00      	cmp	r3, #0
- 8001ad6:	d008      	beq.n	8001aea <main+0x19a>
+ 8001ac8:	f897 307f 	ldrb.w	r3, [r7, #127]	; 0x7f
+ 8001acc:	2b00      	cmp	r3, #0
+ 8001ace:	d008      	beq.n	8001ae2 <main+0x192>
 					while (CDC_Transmit_FS ("ERROR!\n", sizeof("ERROR!\n")) == USBD_BUSY);
- 8001ad8:	bf00      	nop
- 8001ada:	2108      	movs	r1, #8
- 8001adc:	4864      	ldr	r0, [pc, #400]	; (8001c70 <main+0x320>)
- 8001ade:	f00f f83f 	bl	8010b60 <CDC_Transmit_FS>
- 8001ae2:	4603      	mov	r3, r0
- 8001ae4:	2b01      	cmp	r3, #1
- 8001ae6:	d0f8      	beq.n	8001ada <main+0x18a>
- 8001ae8:	e7c9      	b.n	8001a7e <main+0x12e>
+ 8001ad0:	bf00      	nop
+ 8001ad2:	2108      	movs	r1, #8
+ 8001ad4:	4866      	ldr	r0, [pc, #408]	; (8001c70 <main+0x320>)
+ 8001ad6:	f00f f843 	bl	8010b60 <CDC_Transmit_FS>
+ 8001ada:	4603      	mov	r3, r0
+ 8001adc:	2b01      	cmp	r3, #1
+ 8001ade:	d0f8      	beq.n	8001ad2 <main+0x182>
+ 8001ae0:	e7c9      	b.n	8001a76 <main+0x126>
 				}
 				else {
 					while (CDC_Transmit_FS ("Lora packet received!\n", sizeof("Lora packet received!\n")) == USBD_BUSY);
- 8001aea:	bf00      	nop
- 8001aec:	2117      	movs	r1, #23
- 8001aee:	4861      	ldr	r0, [pc, #388]	; (8001c74 <main+0x324>)
- 8001af0:	f00f f836 	bl	8010b60 <CDC_Transmit_FS>
- 8001af4:	4603      	mov	r3, r0
- 8001af6:	2b01      	cmp	r3, #1
- 8001af8:	d0f8      	beq.n	8001aec <main+0x19c>
+ 8001ae2:	bf00      	nop
+ 8001ae4:	2117      	movs	r1, #23
+ 8001ae6:	4863      	ldr	r0, [pc, #396]	; (8001c74 <main+0x324>)
+ 8001ae8:	f00f f83a 	bl	8010b60 <CDC_Transmit_FS>
+ 8001aec:	4603      	mov	r3, r0
+ 8001aee:	2b01      	cmp	r3, #1
+ 8001af0:	d0f8      	beq.n	8001ae4 <main+0x194>
 					while (CDC_Transmit_FS (lora_Rx_buffer, sizeof(lora_Rx_buffer)) == USBD_BUSY);
- 8001afa:	bf00      	nop
- 8001afc:	f107 0308 	add.w	r3, r7, #8
- 8001b00:	f44f 717a 	mov.w	r1, #1000	; 0x3e8
- 8001b04:	4618      	mov	r0, r3
- 8001b06:	f00f f82b 	bl	8010b60 <CDC_Transmit_FS>
- 8001b0a:	4603      	mov	r3, r0
- 8001b0c:	2b01      	cmp	r3, #1
- 8001b0e:	d0f5      	beq.n	8001afc <main+0x1ac>
- 8001b10:	e7b5      	b.n	8001a7e <main+0x12e>
+ 8001af2:	bf00      	nop
+ 8001af4:	f107 0308 	add.w	r3, r7, #8
+ 8001af8:	2140      	movs	r1, #64	; 0x40
+ 8001afa:	4618      	mov	r0, r3
+ 8001afc:	f00f f830 	bl	8010b60 <CDC_Transmit_FS>
+ 8001b00:	4603      	mov	r3, r0
+ 8001b02:	2b01      	cmp	r3, #1
+ 8001b04:	d0f6      	beq.n	8001af4 <main+0x1a4>
+ 8001b06:	e7b6      	b.n	8001a76 <main+0x126>
 			}
 
 		}
 
 
 		else if (usb_Rx_buffer[0] == USB_TIMERS) {
- 8001b12:	4b53      	ldr	r3, [pc, #332]	; (8001c60 <main+0x310>)
- 8001b14:	781a      	ldrb	r2, [r3, #0]
- 8001b16:	4b58      	ldr	r3, [pc, #352]	; (8001c78 <main+0x328>)
- 8001b18:	781b      	ldrb	r3, [r3, #0]
- 8001b1a:	429a      	cmp	r2, r3
- 8001b1c:	d138      	bne.n	8001b90 <main+0x240>
+ 8001b08:	4b55      	ldr	r3, [pc, #340]	; (8001c60 <main+0x310>)
+ 8001b0a:	781a      	ldrb	r2, [r3, #0]
+ 8001b0c:	4b5a      	ldr	r3, [pc, #360]	; (8001c78 <main+0x328>)
+ 8001b0e:	781b      	ldrb	r3, [r3, #0]
+ 8001b10:	429a      	cmp	r2, r3
+ 8001b12:	d138      	bne.n	8001b86 <main+0x236>
 			if (usb_Rx_buffer[1] == USB_CHECKSTATUS) {
- 8001b1e:	4b50      	ldr	r3, [pc, #320]	; (8001c60 <main+0x310>)
- 8001b20:	785a      	ldrb	r2, [r3, #1]
- 8001b22:	4b51      	ldr	r3, [pc, #324]	; (8001c68 <main+0x318>)
- 8001b24:	781b      	ldrb	r3, [r3, #0]
- 8001b26:	429a      	cmp	r2, r3
- 8001b28:	d0a9      	beq.n	8001a7e <main+0x12e>
+ 8001b14:	4b52      	ldr	r3, [pc, #328]	; (8001c60 <main+0x310>)
+ 8001b16:	785a      	ldrb	r2, [r3, #1]
+ 8001b18:	4b53      	ldr	r3, [pc, #332]	; (8001c68 <main+0x318>)
+ 8001b1a:	781b      	ldrb	r3, [r3, #0]
+ 8001b1c:	429a      	cmp	r2, r3
+ 8001b1e:	d0aa      	beq.n	8001a76 <main+0x126>
 
 			}
 			else if (usb_Rx_buffer[1] == USB_TESTOUTPUT) {
- 8001b2a:	4b4d      	ldr	r3, [pc, #308]	; (8001c60 <main+0x310>)
- 8001b2c:	785a      	ldrb	r2, [r3, #1]
- 8001b2e:	4b4f      	ldr	r3, [pc, #316]	; (8001c6c <main+0x31c>)
- 8001b30:	781b      	ldrb	r3, [r3, #0]
- 8001b32:	429a      	cmp	r2, r3
- 8001b34:	d1a3      	bne.n	8001a7e <main+0x12e>
+ 8001b20:	4b4f      	ldr	r3, [pc, #316]	; (8001c60 <main+0x310>)
+ 8001b22:	785a      	ldrb	r2, [r3, #1]
+ 8001b24:	4b51      	ldr	r3, [pc, #324]	; (8001c6c <main+0x31c>)
+ 8001b26:	781b      	ldrb	r3, [r3, #0]
+ 8001b28:	429a      	cmp	r2, r3
+ 8001b2a:	d1a4      	bne.n	8001a76 <main+0x126>
 				if (tick == 0) {
- 8001b36:	4b46      	ldr	r3, [pc, #280]	; (8001c50 <main+0x300>)
- 8001b38:	781b      	ldrb	r3, [r3, #0]
- 8001b3a:	b2db      	uxtb	r3, r3
- 8001b3c:	2b00      	cmp	r3, #0
- 8001b3e:	d110      	bne.n	8001b62 <main+0x212>
+ 8001b2c:	4b48      	ldr	r3, [pc, #288]	; (8001c50 <main+0x300>)
+ 8001b2e:	781b      	ldrb	r3, [r3, #0]
+ 8001b30:	b2db      	uxtb	r3, r3
+ 8001b32:	2b00      	cmp	r3, #0
+ 8001b34:	d110      	bne.n	8001b58 <main+0x208>
 					tick = 10;
- 8001b40:	4b43      	ldr	r3, [pc, #268]	; (8001c50 <main+0x300>)
- 8001b42:	220a      	movs	r2, #10
- 8001b44:	701a      	strb	r2, [r3, #0]
+ 8001b36:	4b46      	ldr	r3, [pc, #280]	; (8001c50 <main+0x300>)
+ 8001b38:	220a      	movs	r2, #10
+ 8001b3a:	701a      	strb	r2, [r3, #0]
 					while (tick != 0);
- 8001b46:	bf00      	nop
- 8001b48:	4b41      	ldr	r3, [pc, #260]	; (8001c50 <main+0x300>)
- 8001b4a:	781b      	ldrb	r3, [r3, #0]
- 8001b4c:	b2db      	uxtb	r3, r3
- 8001b4e:	2b00      	cmp	r3, #0
- 8001b50:	d1fa      	bne.n	8001b48 <main+0x1f8>
+ 8001b3c:	bf00      	nop
+ 8001b3e:	4b44      	ldr	r3, [pc, #272]	; (8001c50 <main+0x300>)
+ 8001b40:	781b      	ldrb	r3, [r3, #0]
+ 8001b42:	b2db      	uxtb	r3, r3
+ 8001b44:	2b00      	cmp	r3, #0
+ 8001b46:	d1fa      	bne.n	8001b3e <main+0x1ee>
 					while (CDC_Transmit_FS ("Tick works!\n", 13) == USBD_BUSY);
- 8001b52:	bf00      	nop
- 8001b54:	210d      	movs	r1, #13
- 8001b56:	4849      	ldr	r0, [pc, #292]	; (8001c7c <main+0x32c>)
- 8001b58:	f00f f802 	bl	8010b60 <CDC_Transmit_FS>
- 8001b5c:	4603      	mov	r3, r0
- 8001b5e:	2b01      	cmp	r3, #1
- 8001b60:	d0f8      	beq.n	8001b54 <main+0x204>
+ 8001b48:	bf00      	nop
+ 8001b4a:	210d      	movs	r1, #13
+ 8001b4c:	484b      	ldr	r0, [pc, #300]	; (8001c7c <main+0x32c>)
+ 8001b4e:	f00f f807 	bl	8010b60 <CDC_Transmit_FS>
+ 8001b52:	4603      	mov	r3, r0
+ 8001b54:	2b01      	cmp	r3, #1
+ 8001b56:	d0f8      	beq.n	8001b4a <main+0x1fa>
 				}
 
 				if (tickGPS == 0) {
- 8001b62:	4b3c      	ldr	r3, [pc, #240]	; (8001c54 <main+0x304>)
- 8001b64:	781b      	ldrb	r3, [r3, #0]
- 8001b66:	b2db      	uxtb	r3, r3
- 8001b68:	2b00      	cmp	r3, #0
- 8001b6a:	d188      	bne.n	8001a7e <main+0x12e>
+ 8001b58:	4b3e      	ldr	r3, [pc, #248]	; (8001c54 <main+0x304>)
+ 8001b5a:	781b      	ldrb	r3, [r3, #0]
+ 8001b5c:	b2db      	uxtb	r3, r3
+ 8001b5e:	2b00      	cmp	r3, #0
+ 8001b60:	d189      	bne.n	8001a76 <main+0x126>
 					tickGPS = 10;
- 8001b6c:	4b39      	ldr	r3, [pc, #228]	; (8001c54 <main+0x304>)
- 8001b6e:	220a      	movs	r2, #10
- 8001b70:	701a      	strb	r2, [r3, #0]
+ 8001b62:	4b3c      	ldr	r3, [pc, #240]	; (8001c54 <main+0x304>)
+ 8001b64:	220a      	movs	r2, #10
+ 8001b66:	701a      	strb	r2, [r3, #0]
 					while (tickGPS != 0);
- 8001b72:	bf00      	nop
- 8001b74:	4b37      	ldr	r3, [pc, #220]	; (8001c54 <main+0x304>)
- 8001b76:	781b      	ldrb	r3, [r3, #0]
- 8001b78:	b2db      	uxtb	r3, r3
- 8001b7a:	2b00      	cmp	r3, #0
- 8001b7c:	d1fa      	bne.n	8001b74 <main+0x224>
+ 8001b68:	bf00      	nop
+ 8001b6a:	4b3a      	ldr	r3, [pc, #232]	; (8001c54 <main+0x304>)
+ 8001b6c:	781b      	ldrb	r3, [r3, #0]
+ 8001b6e:	b2db      	uxtb	r3, r3
+ 8001b70:	2b00      	cmp	r3, #0
+ 8001b72:	d1fa      	bne.n	8001b6a <main+0x21a>
 					while (CDC_Transmit_FS ("GPStick works!\n", 16) == USBD_BUSY);
- 8001b7e:	bf00      	nop
- 8001b80:	2110      	movs	r1, #16
- 8001b82:	483f      	ldr	r0, [pc, #252]	; (8001c80 <main+0x330>)
- 8001b84:	f00e ffec 	bl	8010b60 <CDC_Transmit_FS>
- 8001b88:	4603      	mov	r3, r0
- 8001b8a:	2b01      	cmp	r3, #1
- 8001b8c:	d0f8      	beq.n	8001b80 <main+0x230>
- 8001b8e:	e776      	b.n	8001a7e <main+0x12e>
+ 8001b74:	bf00      	nop
+ 8001b76:	2110      	movs	r1, #16
+ 8001b78:	4841      	ldr	r0, [pc, #260]	; (8001c80 <main+0x330>)
+ 8001b7a:	f00e fff1 	bl	8010b60 <CDC_Transmit_FS>
+ 8001b7e:	4603      	mov	r3, r0
+ 8001b80:	2b01      	cmp	r3, #1
+ 8001b82:	d0f8      	beq.n	8001b76 <main+0x226>
+ 8001b84:	e777      	b.n	8001a76 <main+0x126>
 			}
 
 		}
 
 
 		else if (usb_Rx_buffer[1] == USB_FLIGHTMODE) {
- 8001b90:	4b33      	ldr	r3, [pc, #204]	; (8001c60 <main+0x310>)
- 8001b92:	785a      	ldrb	r2, [r3, #1]
- 8001b94:	4b3b      	ldr	r3, [pc, #236]	; (8001c84 <main+0x334>)
- 8001b96:	781b      	ldrb	r3, [r3, #0]
- 8001b98:	429a      	cmp	r2, r3
- 8001b9a:	d108      	bne.n	8001bae <main+0x25e>
+ 8001b86:	4b36      	ldr	r3, [pc, #216]	; (8001c60 <main+0x310>)
+ 8001b88:	785a      	ldrb	r2, [r3, #1]
+ 8001b8a:	4b3e      	ldr	r3, [pc, #248]	; (8001c84 <main+0x334>)
+ 8001b8c:	781b      	ldrb	r3, [r3, #0]
+ 8001b8e:	429a      	cmp	r2, r3
+ 8001b90:	d108      	bne.n	8001ba4 <main+0x254>
 			while (CDC_Transmit_FS ("OK", 2) == USBD_BUSY);
- 8001b9c:	bf00      	nop
- 8001b9e:	2102      	movs	r1, #2
- 8001ba0:	4839      	ldr	r0, [pc, #228]	; (8001c88 <main+0x338>)
- 8001ba2:	f00e ffdd 	bl	8010b60 <CDC_Transmit_FS>
- 8001ba6:	4603      	mov	r3, r0
- 8001ba8:	2b01      	cmp	r3, #1
- 8001baa:	d0f8      	beq.n	8001b9e <main+0x24e>
+ 8001b92:	bf00      	nop
+ 8001b94:	2102      	movs	r1, #2
+ 8001b96:	483c      	ldr	r0, [pc, #240]	; (8001c88 <main+0x338>)
+ 8001b98:	f00e ffe2 	bl	8010b60 <CDC_Transmit_FS>
+ 8001b9c:	4603      	mov	r3, r0
+ 8001b9e:	2b01      	cmp	r3, #1
+ 8001ba0:	d0f8      	beq.n	8001b94 <main+0x244>
 			break;
- 8001bac:	e00f      	b.n	8001bce <main+0x27e>
+ 8001ba2:	e00f      	b.n	8001bc4 <main+0x274>
 		}
 
 
 		else if (usb_Rx_buffer[1] == USB_PING) {
- 8001bae:	4b2c      	ldr	r3, [pc, #176]	; (8001c60 <main+0x310>)
- 8001bb0:	785a      	ldrb	r2, [r3, #1]
- 8001bb2:	4b36      	ldr	r3, [pc, #216]	; (8001c8c <main+0x33c>)
- 8001bb4:	781b      	ldrb	r3, [r3, #0]
- 8001bb6:	429a      	cmp	r2, r3
- 8001bb8:	f47f af61 	bne.w	8001a7e <main+0x12e>
+ 8001ba4:	4b2e      	ldr	r3, [pc, #184]	; (8001c60 <main+0x310>)
+ 8001ba6:	785a      	ldrb	r2, [r3, #1]
+ 8001ba8:	4b38      	ldr	r3, [pc, #224]	; (8001c8c <main+0x33c>)
+ 8001baa:	781b      	ldrb	r3, [r3, #0]
+ 8001bac:	429a      	cmp	r2, r3
+ 8001bae:	f47f af62 	bne.w	8001a76 <main+0x126>
 
 			while (CDC_Transmit_FS ("PONG", 4) == USBD_BUSY);
- 8001bbc:	bf00      	nop
- 8001bbe:	2104      	movs	r1, #4
- 8001bc0:	4833      	ldr	r0, [pc, #204]	; (8001c90 <main+0x340>)
- 8001bc2:	f00e ffcd 	bl	8010b60 <CDC_Transmit_FS>
- 8001bc6:	4603      	mov	r3, r0
- 8001bc8:	2b01      	cmp	r3, #1
- 8001bca:	d0f8      	beq.n	8001bbe <main+0x26e>
+ 8001bb2:	bf00      	nop
+ 8001bb4:	2104      	movs	r1, #4
+ 8001bb6:	4836      	ldr	r0, [pc, #216]	; (8001c90 <main+0x340>)
+ 8001bb8:	f00e ffd2 	bl	8010b60 <CDC_Transmit_FS>
+ 8001bbc:	4603      	mov	r3, r0
+ 8001bbe:	2b01      	cmp	r3, #1
+ 8001bc0:	d0f8      	beq.n	8001bb4 <main+0x264>
 		while (usb_Rx_ready == 0);
- 8001bcc:	e757      	b.n	8001a7e <main+0x12e>
+ 8001bc2:	e758      	b.n	8001a76 <main+0x126>
 			//break;
 		}
 
 	}
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
- 8001bce:	2108      	movs	r1, #8
- 8001bd0:	4821      	ldr	r0, [pc, #132]	; (8001c58 <main+0x308>)
- 8001bd2:	f001 fd97 	bl	8003704 <HAL_GPIO_TogglePin>
+ 8001bc4:	2108      	movs	r1, #8
+ 8001bc6:	4824      	ldr	r0, [pc, #144]	; (8001c58 <main+0x308>)
+ 8001bc8:	f001 fd9c 	bl	8003704 <HAL_GPIO_TogglePin>
 	// Reset timers before main program
 	tick = 0;
- 8001bd6:	4b1e      	ldr	r3, [pc, #120]	; (8001c50 <main+0x300>)
- 8001bd8:	2200      	movs	r2, #0
- 8001bda:	701a      	strb	r2, [r3, #0]
+ 8001bcc:	4b20      	ldr	r3, [pc, #128]	; (8001c50 <main+0x300>)
+ 8001bce:	2200      	movs	r2, #0
+ 8001bd0:	701a      	strb	r2, [r3, #0]
 	tickGPS = 0;
- 8001bdc:	4b1d      	ldr	r3, [pc, #116]	; (8001c54 <main+0x304>)
- 8001bde:	2200      	movs	r2, #0
- 8001be0:	701a      	strb	r2, [r3, #0]
+ 8001bd2:	4b20      	ldr	r3, [pc, #128]	; (8001c54 <main+0x304>)
+ 8001bd4:	2200      	movs	r2, #0
+ 8001bd6:	701a      	strb	r2, [r3, #0]
 
 	HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
- 8001be2:	2140      	movs	r1, #64	; 0x40
- 8001be4:	481c      	ldr	r0, [pc, #112]	; (8001c58 <main+0x308>)
- 8001be6:	f001 fd8d 	bl	8003704 <HAL_GPIO_TogglePin>
+ 8001bd8:	2140      	movs	r1, #64	; 0x40
+ 8001bda:	481f      	ldr	r0, [pc, #124]	; (8001c58 <main+0x308>)
+ 8001bdc:	f001 fd92 	bl	8003704 <HAL_GPIO_TogglePin>
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	while (1)
 	{
 
 
 		lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 1000, &lora_error);
- 8001bea:	f107 0108 	add.w	r1, r7, #8
- 8001bee:	f207 400c 	addw	r0, r7, #1036	; 0x40c
- 8001bf2:	1dfb      	adds	r3, r7, #7
- 8001bf4:	9300      	str	r3, [sp, #0]
- 8001bf6:	f44f 737a 	mov.w	r3, #1000	; 0x3e8
- 8001bfa:	22e8      	movs	r2, #232	; 0xe8
- 8001bfc:	f7ff fe13 	bl	8001826 <lora_receive_packet_blocking>
- 8001c00:	4603      	mov	r3, r0
- 8001c02:	f887 3427 	strb.w	r3, [r7, #1063]	; 0x427
-		while (CDC_Transmit_FS (lora_Rx_buffer, sizeof(lora_Rx_buffer)) == USBD_BUSY);
- 8001c06:	bf00      	nop
- 8001c08:	f107 0308 	add.w	r3, r7, #8
- 8001c0c:	f44f 717a 	mov.w	r1, #1000	; 0x3e8
- 8001c10:	4618      	mov	r0, r3
- 8001c12:	f00e ffa5 	bl	8010b60 <CDC_Transmit_FS>
- 8001c16:	4603      	mov	r3, r0
- 8001c18:	2b01      	cmp	r3, #1
- 8001c1a:	d0f5      	beq.n	8001c08 <main+0x2b8>
+ 8001be0:	f107 0108 	add.w	r1, r7, #8
+ 8001be4:	f107 0064 	add.w	r0, r7, #100	; 0x64
+ 8001be8:	1dfb      	adds	r3, r7, #7
+ 8001bea:	9300      	str	r3, [sp, #0]
+ 8001bec:	f44f 737a 	mov.w	r3, #1000	; 0x3e8
+ 8001bf0:	2240      	movs	r2, #64	; 0x40
+ 8001bf2:	f7ff fe18 	bl	8001826 <lora_receive_packet_blocking>
+ 8001bf6:	4603      	mov	r3, r0
+ 8001bf8:	f887 307f 	strb.w	r3, [r7, #127]	; 0x7f
+		while (CDC_Transmit_FS (lora_Rx_buffer, strlen(lora_Rx_buffer)) == USBD_BUSY);
+ 8001bfc:	bf00      	nop
+ 8001bfe:	f107 0308 	add.w	r3, r7, #8
+ 8001c02:	4618      	mov	r0, r3
+ 8001c04:	f7fe fafc 	bl	8000200 <strlen>
+ 8001c08:	4603      	mov	r3, r0
+ 8001c0a:	b29a      	uxth	r2, r3
+ 8001c0c:	f107 0308 	add.w	r3, r7, #8
+ 8001c10:	4611      	mov	r1, r2
+ 8001c12:	4618      	mov	r0, r3
+ 8001c14:	f00e ffa4 	bl	8010b60 <CDC_Transmit_FS>
+ 8001c18:	4603      	mov	r3, r0
+ 8001c1a:	2b01      	cmp	r3, #1
+ 8001c1c:	d0ef      	beq.n	8001bfe <main+0x2ae>
 		lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 1000, &lora_error);
- 8001c1c:	e7e5      	b.n	8001bea <main+0x29a>
- 8001c1e:	bf00      	nop
+ 8001c1e:	e7df      	b.n	8001be0 <main+0x290>
  8001c20:	19ed92c0 	.word	0x19ed92c0
  8001c24:	00000000 	.word	0x00000000
  8001c28:	20000554 	.word	0x20000554
