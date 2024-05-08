@@ -165,8 +165,8 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	uint8_t mira_write_Tx_payload[4] = {0x00, 0x00, 0x00, 0x00};
 
 	// Set time to 0
-	status = mira_command(huart, WRITE_REGISTER, 0x0F, mira_write_Tx_payload, mira_response_Rx, Timeout);
-	if (status != HAL_OK) {return status;}
+//	status = mira_command(huart, WRITE_REGISTER, 0x0F, mira_write_Tx_payload, mira_response_Rx, Timeout);
+//	if (status != HAL_OK) {return status;}
 
 	// Activate ADC
 	mira_write_Tx_payload[3] = 0x01;

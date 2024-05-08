@@ -71,8 +71,8 @@ def main():
             response = ser.readline().decode('latin-1')
             print("Response:", response)
             
-            if response.startswith("OK"):
-                break
+            #if response.startswith("OK"):
+            break
             
             
         elif userinput == "ping":

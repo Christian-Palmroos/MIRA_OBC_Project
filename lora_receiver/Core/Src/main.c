@@ -283,6 +283,12 @@ int main(void)
 	/* USER CODE BEGIN 2 */
 
 
+	// Enalbe MIRA power from OBC
+	HAL_GPIO_WritePin(MIRA_EN_PWR_GPIO_Port, MIRA_EN_PWR_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(OCPEN_GPIO_Port, OCPEN_Pin, GPIO_PIN_SET);
+
+
+
 	// WAIT FOR USB CONNECTION
 	HAL_Delay(8000);
 	while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY);
