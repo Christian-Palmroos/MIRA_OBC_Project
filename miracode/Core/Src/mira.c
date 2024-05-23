@@ -123,17 +123,18 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 	message[10+i] = (sum&0x00FF);
 
 	// Enable transmitter and disable receiver
-	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
 	// write given value to register at given address
 	status = HAL_UART_Transmit(huart, message, sizeof(message), Timeout);
 
 	// Enable receiver and disable transmitter
-	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
 
 	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
+	HAL_Delay(3);
 
 	return status;
 
@@ -187,6 +188,7 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
+
 
 	// Set integration time to 5 seconds
 	mira_write_Tx_payload[3] = 0x05;

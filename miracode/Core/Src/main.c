@@ -224,6 +224,7 @@ void add_to_buffer(uint8_t* data_buffer, uint8_t* data, int size) {
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 	// The SD card mount, init, read, and write variables
 	FRESULT sd_result_write; /* FatFs function common result code */
@@ -350,6 +351,7 @@ int main(void)
 	// Initialize I2C2 with custom driver
 	BSP_I2C2_Init();
 
+
 	//Initialize Msp for both UARTs
 	HAL_UART_MspInit(&huart1);
 	HAL_UART_MspInit(&huart2);
@@ -368,6 +370,8 @@ int main(void)
   MX_DMA_Init();
   MX_I2C1_Init();
   MX_SDMMC1_SD_Init();
+  // Initialize SD card
+  BSP_SD_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
@@ -389,45 +393,44 @@ int main(void)
 	HAL_GPIO_WritePin(OCPEN_GPIO_Port, OCPEN_Pin, GPIO_PIN_SET);
 
 	// enable channel 1 for MIRA communication
-	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
 	// disable channel 2
-	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(RX_EN_1_GPIO_Port, RX_EN_1_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TX_EN_1_GPIO_Port, TX_EN_1_Pin, GPIO_PIN_RESET);
 
 	// WAIT FOR USB CONNECTION
+	// Comment this out once build finished
 	HAL_Delay(1000);
 	while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY);
 
+//	while(1){
 	// Run test sequence for MIRA
-//	status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-//	HAL_Delay(100);
-//	while (CDC_Transmit_FS (mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer)) == USBD_BUSY);
-//	HAL_Delay(100);
-//	while (CDC_Transmit_FS (mira_response_Rx_buffer, sizeof(mira_response_Rx_buffer)) == USBD_BUSY);
-
-	// Enable ADC on MIRA.
-//		mira_target_reg = 0x02;
-//		mira_Tx_payload[3] = 0x01;
-//		status = mira_command(&huart1, WRITE_REGISTER, mira_target_reg, mira_Tx_payload, mira_Rx_buffer, 5000);
+//	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+	// Comment this out once build finished
+	HAL_Delay(1000);
+//	}
 
 
 	/// LoRa Init /////////////////////////////////////////////////////////////////////////////////
 	uint8_t lora_res = lora_init(&lora, &hspi1, LORA_NSS_GPIO_Port, LORA_NSS_Pin, LORA_BASE_FREQUENCY_435);
+	// Comment this out once build finished
 	if (lora_res != LORA_OK) {
 		// Initialization failed
 		while (CDC_Transmit_FS ("LORA INIT NOT OK!\n", 18) == USBD_BUSY);
+	}
+	if (lora_res == LORA_OK) {
+		// All good
+		while (CDC_Transmit_FS ("LORA OK!\n", 9) == USBD_BUSY);
 	}
 	lora_res = lora_send_packet(&lora, (uint8_t *)"test", 4);
 	if (lora_res != LORA_OK) {
 		// Send failed
 		while (CDC_Transmit_FS ("LORA SEND NOT OK!\n", 18) == USBD_BUSY);
 	}
-	if (lora_res == LORA_OK) {
-		// All good
-		while (CDC_Transmit_FS ("LORA OK!\n", 9) == USBD_BUSY);
-	}
+
 
 
 	/// Gyro Init /////////////////////////////////////////////////////////////////////////////////
@@ -447,6 +450,7 @@ int main(void)
 	gyro_result_init = LSM6DSO_Init(&gyro_device);
 
 	// Check and print gyro device status
+	// Comment this out once build finished
 	if (gyro_result_init == 0) {while (CDC_Transmit_FS ("GYRO OK!\n", 9) == USBD_BUSY);}
 	else {while (CDC_Transmit_FS ("GYRO NOT OK!\n", 13) == USBD_BUSY);}
 
@@ -484,6 +488,7 @@ int main(void)
 	bmp_result = bmp3_set_sensor_settings(bmp_settings_select, &bmp_settings, &bmp_device);
 	bmp3_check_rslt("bmp3_set_sensor_settings", bmp_result);
 
+	// Comment this out once build finished
 	if (bmp_result == BMP3_OK) {
 		while (CDC_Transmit_FS ("BMP OK!\n", 8) == USBD_BUSY);
 	}
@@ -552,10 +557,15 @@ int main(void)
 //		}
 //	}
 //	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
-	sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
-	if(sd_status != FR_OK)
+	sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
+	// Comment this out once build finished
+	GPIO_PinState pinstate = HAL_GPIO_ReadPin(CARD_DETECT_GPIO_Port, CARD_DETECT_Pin);
+	while(sd_status != FR_OK)
 	{
 		while (CDC_Transmit_FS ("Mount failed!\n", 14) == USBD_BUSY);
+
+		//while (CDC_Transmit_FS (, 14) == USBD_BUSY);
+		sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
 	}
 	sd_status = f_open(&SDFile, "STM32.TXT", FA_OPEN_APPEND | FA_WRITE);
 	if(sd_status != FR_OK)
@@ -573,7 +583,7 @@ int main(void)
 
 
 	/// I2C scanning /////////////////////////////////////////////////////////////////////////////////
-
+	// Comment this out once build finished
 	//-[ I2C Bus Scanning ]-
 	uint8_t i = 0, ret;
 	for(i = 1; i < 128; i++)
@@ -719,12 +729,26 @@ int main(void)
 	// Reset timers before main program
 	tick = 0;
 	tickGPS = 0;
+	tickSync = 0;
 
 	HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	while (1) {
+
+		// Flush SD card every minute
+		if (tickSync == 0) {
+			tickSync = 600;
+			sd_status = f_sync(&SDFile);
+			// Comment this out once build finished
+			if(sd_status != FR_OK)
+			{
+				while (CDC_Transmit_FS ("Sync failed!\n", 14) == USBD_BUSY);
+			}
+
+		}
+
 
 		// Read temperature, pressure and gyro data every second and send everything to SD and lora every second
 		if (tick == 0) {
@@ -855,9 +879,9 @@ int main(void)
 
 			/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
 			//write gps data to SD
-			if (sd_status == FR_OK){
-				sd_result_write = f_write(&SDFile, data_buffer, strlen((char *)data_buffer), (void *)&sd_err_byteswritten);
-			}
+			//if (sd_status == FR_OK){
+			sd_result_write = f_write(&SDFile, data_buffer, strlen((char *)data_buffer), (void *)&sd_err_byteswritten);
+			//}
 			// Sendgps data to LORA
 			if (lora_res == LORA_OK) {
 				lora_send_packet(&lora, data_buffer, strlen(data_buffer));
@@ -972,9 +996,6 @@ static void MX_NVIC_Init(void)
   /* DMA1_Channel2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-  /* SDMMC1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SDMMC1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(SDMMC1_IRQn);
 }
 
 /**
@@ -1307,11 +1328,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CHG_INT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LORA_DIG0_Pin CARD_DETECT_Pin */
-  GPIO_InitStruct.Pin = LORA_DIG0_Pin|CARD_DETECT_Pin;
+  /*Configure GPIO pin : LORA_DIG0_Pin */
+  GPIO_InitStruct.Pin = LORA_DIG0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(LORA_DIG0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LORA_RST_Pin LORA_NSS_Pin */
   GPIO_InitStruct.Pin = LORA_RST_Pin|LORA_NSS_Pin;
@@ -1325,6 +1346,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(OCPFAULT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CARD_DETECT_Pin */
+  GPIO_InitStruct.Pin = CARD_DETECT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(CARD_DETECT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED0_Pin LED1_Pin LED2_Pin LED3_Pin */
   GPIO_InitStruct.Pin = LED0_Pin|LED1_Pin|LED2_Pin|LED3_Pin;

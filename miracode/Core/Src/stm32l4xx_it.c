@@ -50,6 +50,7 @@ volatile unsigned gps_data_ready;
 volatile unsigned gps_send_ready = 1;
 volatile uint8_t tick;
 volatile uint8_t tickGPS;
+volatile uint8_t tickSync;
 
 uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
 uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
@@ -257,6 +258,7 @@ void TIM1_TRG_COM_TIM17_IRQHandler(void)
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 0 */
 	if (tick) {tick--;}
 	if (tickGPS) {tickGPS--;}
+	if (tickSync) {tickSync--;}
   /* USER CODE END TIM1_TRG_COM_TIM17_IRQn 0 */
   HAL_TIM_IRQHandler(&htim17);
   /* USER CODE BEGIN TIM1_TRG_COM_TIM17_IRQn 1 */
