@@ -106,6 +106,12 @@ char output[32];
 uint8_t output_ctr = 0;
 unsigned int hexstatus;
 
+/*
+ * Converts 8-bit unsigned integer into its corresponding two-character
+ * hexadecimal ASCII-representation.
+ * @param data: integer to be converted into ascii hexadecimal string
+ * @param p[]: array where the two-character hexadecimal representation will be stored
+ */
 void hex_byte(uint8_t data, uint8_t p[]) {
 	uint8_t temp;
 
@@ -123,6 +129,10 @@ void hex_byte(uint8_t data, uint8_t p[]) {
 	p[1] = temp;
 }
 
+/*
+ * Inserts a character into an array "output" at the current position specified by output_ctr.
+ * @param c: character
+ */
 uint32_t put_one_char(char c) {
 	output[output_ctr] = c;
 	if (output_ctr < 32 - 1) {
@@ -132,6 +142,12 @@ uint32_t put_one_char(char c) {
 	return 1;
 }
 
+/*
+ * Converts an unsigned integer to its two-character hexadecimal string representation and attempts
+ * to insert each character into an output buffer.
+ * @param x: integer input
+ * @return 1 if array becomes full, otherwise 0
+ */
 uint32_t puthex(uint8_t x) {
 	char c;
 	if (((x & 0xF0) >> 4) > 9) {
@@ -152,12 +168,22 @@ uint32_t puthex(uint8_t x) {
 	return 0;
 }
 
+/*
+ * Converts a 16-bit unsigned integer to its 4-character hexadecimal string representation.
+ * @param x: 16-bit integer
+ */
 uint32_t puthexword(uint16_t x) {
 	if (puthex((x & 0xFF00) >> 8)) return 1;
 	if (puthex((x & 0x00FF))) return 1;
 	return 0;
 }
 
+/*
+ * Converts a 16-bit unsigned integer to its decimal representation and inserts it into an output buffer.
+ * @param x: 16-bit unsigned integer
+ * @param zeros: 8-bit unsigned integer that specifies the number of leading zeroes.
+ * @returns 0
+ */
 uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
 	char c;
 	uint8_t r;
@@ -183,6 +209,12 @@ uint32_t putdecimal16(uint16_t x, uint8_t zeros) {
 	return 0;
 }
 
+/*
+ * Adds ASCII data to a data buffer.
+ * @param data_buffer: pointer to the data buffer
+ * @param data: pointer to the data that is added to the buffer
+ * @param size: int telling the size (length) of data
+ */
 void add_to_buffer(uint8_t* data_buffer, uint8_t* data, int size) {
 
 	for (int i = 0; i < size; i++) {

@@ -35,6 +35,12 @@ const uint8_t POWERSAVE = 0xC0;
 //volatile unsigned mira_ready_for_comm = 1;
 
 
+/*
+ * Computes the CRC16 (Cyclic Redundancy Check) for a given data array.
+ * @param *nData: pointer to the data array
+ * @param wLength: length of the data array
+ * @return 16-bit unsigned integer which is the computed CRC16 value.
+ */
 uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
 {
 	static const uint16_t wCRCTable[] = {
@@ -84,6 +90,15 @@ uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
 
 }
 
+/*
+ * Sends a command with an empty payload to MIRA over UART and receives a response.
+ * @param *huart: pointer to the UART handle structure
+ * @param command: the command to be sent (integer)
+ * @param reg: the register address.
+ * @param *rxBuffer: pointer to the buffer that stores the received data
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *rxBuffer, uint32_t Timeout){
 
 	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
@@ -137,7 +152,15 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 
 }
 
-
+/*
+ * Sends a command to MIRA over UART and receives a response.
+ * @param *huart: pointer to the UART handle structure
+ * @param command: the command to be sent (integer)
+ * @param reg: the register address.
+ * @param *rxBuffer: pointer to the buffer that stores the received data
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *data, uint8_t *rxBuffer, uint32_t Timeout){
 
 	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
@@ -197,7 +220,14 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 
 }
 
-
+/*
+ * Retrieves science data and marks data as read in MIRA register.
+ * @param *huart: pointer to the UART handle structure
+ * @param *science_Rx: pointer to the buffer that stores the science data
+ * @param *response_Rx: pointer to the buffer that stores the response from MIRA
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
@@ -220,6 +250,13 @@ HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_
 	return status;
 }
 
+/* Issues a series of commands to MIRA as a test sequence to check for normal operational capability.
+ * @param *huart: pointer to the UART handle structure
+ * @param *science_Rx: pointer to the buffer that stores the science data
+ * @param *response_Rx: pointer to the buffer that stores the response from MIRA
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout) {
 
 	HAL_StatusTypeDef status;
@@ -402,7 +439,13 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 
 }
 
-
+/*
+ * Retrieves housekeeping data from MIRA.
+ * @param *huart: pointer to the UART handle structure
+ * @param *rxBuffer: pointer to the buffer that stores the MIRA housekeeping data
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
@@ -417,6 +460,12 @@ HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxB
 
 }
 
+/*
+ * Activates MIRA powersave
+ * @param *huart: pointer to the UART handle structure
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef activate_powersave(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
@@ -450,7 +499,12 @@ HAL_StatusTypeDef activate_powersave(UART_HandleTypeDef *huart, uint32_t Timeout
 	return status;
 }
 
-
+/*
+ * Deactivates MIRA powersave.
+ * @param *huart: pointer to the UART handle structure
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef deactivate_powersave(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
@@ -484,7 +538,12 @@ HAL_StatusTypeDef deactivate_powersave(UART_HandleTypeDef *huart, uint32_t Timeo
 	return status;
 }
 
-
+/*
+ * Initialization sequence for MIRA. (DEPRECATED)
+ * @param *huart: pointer to the UART handle structure
+ * @param Timeout: timeout duration for UART communication in milliseconds
+ * @return status: status of the UART operation
+ */
 HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
