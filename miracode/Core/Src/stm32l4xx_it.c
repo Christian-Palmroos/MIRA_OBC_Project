@@ -52,12 +52,13 @@ volatile uint8_t tick;
 volatile uint8_t tickGPS;
 volatile uint8_t tickSync;
 
-uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
-uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
-volatile uint8_t *mira_rxBuffer;
-volatile uint8_t mira_rxBufferPos;
-volatile unsigned mira_data_ready;
-volatile unsigned mira_send_ready = 1;
+//uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
+//uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
+//volatile uint8_t *mira_rxBuffer;
+//volatile uint8_t mira_rxBufferPos;
+//volatile unsigned mira_data_ready;
+//volatile unsigned mira_send_ready = 1;
+volatile unsigned mira_receive_ready = 1;
 
 /* USER CODE END PV */
 

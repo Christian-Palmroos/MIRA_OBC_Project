@@ -14,7 +14,7 @@ const uint8_t READ_REGISTER = 0x02;
 const uint8_t WRITE_REGISTER = 0x03;
 const uint8_t GET_HOUSEKEEPING = 0x30;
 const uint8_t GET_SCIENCE_DATA = 0x40;
-const uint8_t GET_CALBRATION_DATA = 0x42;
+const uint8_t GET_CALIBRATION_DATA = 0x42;
 const uint8_t SET_TIME = 0x50;
 const uint8_t GET_TIME = 0x51;
 
@@ -84,6 +84,59 @@ uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
 
 }
 
+HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *rxBuffer, uint32_t Timeout){
+
+	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
+	//while (!mira_ready_for_comm);//{HAL_Delay(100);}
+//	HAL_Delay(500);
+//	mira_ready_for_comm = 0;
+
+	HAL_StatusTypeDef status;
+	uint8_t message[10];
+	uint8_t sync[2] = {0x5a, 0xce};
+	// do this (below) properly some other time
+	uint8_t length[2] = {0x00, 0x01};
+	uint8_t src[1] = {0xc1};
+	uint8_t dest[1] = {0xe1};
+	uint16_t sum = 0;
+
+	message[0] = sync[0];
+	message[1] = sync[1];
+	message[2] = length[0];
+	message[3] = length[1];
+	message[4] = src[0];
+	message[5] = dest[0];
+	message[6] = command;
+	message[7] = reg;
+
+	sum = CRC16(message+2, 10);
+
+	message[8] = (sum&0xFF00)>>8;
+
+	message[9] = (sum&0x00FF);
+
+	//while (huart->RxState != HAL_UART_STATE_READY) {HAL_Delay(1);}
+
+	// Enable transmitter and disable receiver
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
+
+	// write given value to register at given address
+	status = HAL_UART_Transmit(huart, message, 10, Timeout);
+
+	// Enable receiver and disable transmitter
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
+	if (status != HAL_OK) {return status;}
+
+	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
+	HAL_Delay(3);
+
+
+	return status;
+
+}
+
 
 HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *data, uint8_t *rxBuffer, uint32_t Timeout){
 
@@ -122,6 +175,8 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 
 	message[10+i] = (sum&0x00FF);
 
+	//while (huart->RxState != HAL_UART_STATE_READY) {HAL_Delay(1);}
+
 	// Enable transmitter and disable receiver
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
@@ -132,9 +187,11 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 	// Enable receiver and disable transmitter
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
+	if (status != HAL_OK) {return status;}
 
 	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
 	HAL_Delay(3);
+
 
 	return status;
 
@@ -144,12 +201,16 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
-	uint8_t mira_empty_Tx_payload[0] = {};
 	uint8_t mira_write_Tx_payload[4] = {0x00, 0x00, 0x00, 0x00};
 
 	// Get the science data and save it to rxBuffer
-	status = mira_command(huart, GET_SCIENCE_DATA, 0x00, mira_empty_Tx_payload, science_Rx, Timeout);
-	if (status != HAL_OK) {return status;}
+	status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, 0x00, science_Rx, Timeout);
+	if (status != HAL_OK) {
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(50);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		return status;
+	}
 
 	// Mark as read
 	mira_write_Tx_payload[3] = MARK_AS_READ;
@@ -175,11 +236,19 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Select ADC channel for analysis
 	mira_write_Tx_payload[3] = 0x05;
 	status = mira_command(huart, WRITE_REGISTER, 0x03, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	// Set calibration multiplier, 3250 = 0xCB2
 	mira_write_Tx_payload[2] = 0x0C;
@@ -189,12 +258,20 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 
 	// Set integration time to 5 seconds
 	mira_write_Tx_payload[3] = 0x05;
 	status = mira_command(huart, WRITE_REGISTER, 0x07, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	// Skipping read spectrum status
 
@@ -206,17 +283,29 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Activate test pulser
 	mira_write_Tx_payload[3] = 0x01;
 	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Activate analysis using default parameters
 	mira_write_Tx_payload[3] = 0x01;
 	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	// Pause while integration happens
 	HAL_Delay(800);
@@ -229,6 +318,10 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Pause while integration happens
 	HAL_Delay(1500);
 
@@ -239,6 +332,10 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	// Pause while integration happens
 	HAL_Delay(1000);
@@ -251,6 +348,10 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	mira_write_Tx_payload[2] = 0x00;
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Pause while integration happens
 	HAL_Delay(500);
 
@@ -259,6 +360,10 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	status = mira_command(huart, WRITE_REGISTER, 0x0D, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	// Pause while integration happens
 	HAL_Delay(1200);
@@ -269,17 +374,29 @@ HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science
 	status = mira_science_data(huart, science_Rx, response_Rx, 5000);
 	if (status != HAL_OK) {return status;}
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Deactivate analysis
 	mira_write_Tx_payload[3] = 0x00;
 	status = mira_command(huart, WRITE_REGISTER, 0x06, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
 
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+
 	// Deactivate test pulser
 	mira_write_Tx_payload[3] = 0x00;
 	status = mira_command(huart, WRITE_REGISTER, 0x0C, mira_write_Tx_payload, mira_response_Rx, Timeout);
 	if (status != HAL_OK) {return status;}
 	mira_write_Tx_payload[3] = 0x00;
+
+	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(1000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 	return status;
 

@@ -50,14 +50,15 @@ extern volatile uint8_t step;
 extern volatile unsigned gps_data_ready;
 extern volatile unsigned gps_send_ready;
 
-#define mira_RXBUFSIZE 10
-extern uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
-extern uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
-
-extern volatile uint8_t *mira_rxBuffer;
-extern volatile uint8_t mira_rxBufferPos;
-extern volatile unsigned mira_data_ready;
-extern volatile unsigned mira_send_ready;
+//#define mira_RXBUFSIZE 10
+//extern uint8_t mira_rxBuffer1[mira_RXBUFSIZE];
+//extern uint8_t mira_rxBuffer2[mira_RXBUFSIZE];
+//
+//extern volatile uint8_t *mira_rxBuffer;
+//extern volatile uint8_t mira_rxBufferPos;
+//extern volatile unsigned mira_data_ready;
+//extern volatile unsigned mira_send_ready;
+extern volatile unsigned mira_receive_ready;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
