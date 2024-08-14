@@ -240,7 +240,6 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
 HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
-//	uint8_t mira_write_Tx_payload[4] = {0x00, 0x00, 0x00, 0x00};
 
 	// Get the science data and save it to rxBuffer
 	status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, Timeout);
@@ -250,10 +249,6 @@ HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_
 		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 		return status;
 	}
-
-	// Mark as read
-//	mira_write_Tx_payload[3] = MARK_AS_READ;
-//	status = mira_command(huart, WRITE_REGISTER, CHECK_FOR_READ, mira_write_Tx_payload, response_Rx, 5000);
 
 	// return status
 	return status;
