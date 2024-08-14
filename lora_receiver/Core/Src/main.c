@@ -340,7 +340,7 @@ int main(void)
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	/// Pre-main program /////////////////////////////////////////////////////////////////////////////////
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
-	while (1) {
+	while (0) {
 
 		while (usb_Rx_ready == 0);
 		usb_Rx_ready = 0;
@@ -412,7 +412,7 @@ int main(void)
 
 
 		lora_res = lora_receive_packet_blocking(&lora, &lora_Rx_buffer, sizeof(lora_Rx_buffer), 1000, &lora_error);
-		while (CDC_Transmit_FS (lora_Rx_buffer, strlen(lora_Rx_buffer)) == USBD_BUSY);
+		CDC_Transmit_FS (lora_Rx_buffer, strlen(lora_Rx_buffer));
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
