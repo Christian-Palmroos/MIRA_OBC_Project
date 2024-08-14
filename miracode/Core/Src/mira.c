@@ -112,10 +112,10 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 	for (j = 0; j < 32; j++) {
 		message[j] = 0;
 	}
-	uint8_t message_len = 10;
+	uint8_t message_len = 9;
 	uint8_t sync[2] = {0x5a, 0xce};
 	// do this (below) properly some other time
-	uint8_t length[2] = {0x00, 0x01};
+	uint8_t length[2] = {0x00, 0x00};
 	uint8_t src[1] = {0xc1};
 	uint8_t dest[1] = {0xe1};
 	uint16_t sum = 0;
@@ -127,12 +127,11 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 	message[32 - message_len + 4] = src[0];
 	message[32 - message_len + 5] = dest[0];
 	message[32 - message_len + 6] = command;
-	message[32 - message_len + 7] = reg;
 
 	sum = CRC16(message+2, 30);
 
-	message[32 - message_len + 8] = (sum&0xFF00)>>8;
-	message[32 - message_len + 9] = (sum&0x00FF);
+	message[32 - message_len + 7] = (sum&0xFF00)>>8;
+	message[32 - message_len + 8] = (sum&0x00FF);
 
 	//while (huart->RxState != HAL_UART_STATE_READY) {HAL_Delay(1);}
 
