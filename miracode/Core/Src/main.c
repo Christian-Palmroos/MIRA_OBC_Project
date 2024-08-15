@@ -448,18 +448,18 @@ int main(void)
 	if (PRINT_TOGGLE == 1) {
 		while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY); }
 
-	// Run test sequence for MIRA
-	status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-
-	while(status != HAL_OK){
-
-		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		HAL_Delay(800);
-		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-		HAL_Delay(200);
-		status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-
-	}
+//	// Run test sequence for MIRA
+//	//status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+//
+//	while(status != HAL_OK){
+//
+//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+//		HAL_Delay(800);
+//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+//		HAL_Delay(200);
+//		//status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+//
+//	}
 
 	HAL_Delay(1000);
 	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);

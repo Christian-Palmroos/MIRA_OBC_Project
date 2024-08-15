@@ -1,9 +1,6 @@
 ../Core/Src/mira.c:44:10:CRC16	24	static
-../Core/Src/mira.c:102:19:mira_command_empty_payload	56	static
-../Core/Src/mira.c:165:19:mira_command	88	static
-../Core/Src/mira.c:237:19:mira_science_data	40	static
-../Core/Src/mira.c:266:19:mira_test_sequence	48	static
-../Core/Src/mira.c:455:19:mira_housekeeping_data	40	static
-../Core/Src/mira.c:475:19:activate_powersave	40	static
-../Core/Src/mira.c:514:19:deactivate_powersave	40	static
-../Core/Src/mira.c:553:19:mira_init	56	static
+../Core/Src/mira.c:102:19:mira_command_empty_payload	88	static
+../Core/Src/mira.c:168:19:mira_command	88	static
+../Core/Src/mira.c:240:19:mira_science_data	32	static
+../Core/Src/mira.c:265:19:mira_housekeeping_data	32	static
+../Core/Src/mira.c:284:19:mira_init	272	static
