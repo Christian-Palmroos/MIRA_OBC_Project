@@ -300,9 +300,9 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
-	// Set AD address
+	// Set AD address ############################################################################3
 	uint8_t AD_addr = 0x03;
-	uint8_t mira_write_AD_addr[1] = {0x00,0x00,0x00};
+	uint8_t mira_write_AD_addr[1] = {0x00,0x00,0x02}; // set value 2
 	status =  mira_command(huart, WRITE_REGISTER, AD_addr, mira_write_AD_addr, mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
