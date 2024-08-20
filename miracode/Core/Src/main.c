@@ -420,6 +420,12 @@ int main(void)
 	// Power on LED
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 
+	// WAIT FOR USB CONNECTION
+	// Comment this out once build finished
+	if (PRINT_TOGGLE == 1) {
+		while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY); }
+
+
 	/// MIRA Init /////////////////////////////////////////////////////////////////////////////////
 
 
@@ -436,30 +442,22 @@ int main(void)
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
-	// Waiting for power distribution in all systems for 10 seconds
+	// Waiting for power distribution in all systems for 2 seconds
 	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 	HAL_Delay(2000);
 	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
-	//status = mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
 
-	// WAIT FOR USB CONNECTION
-	// Comment this out once build finished
-	if (PRINT_TOGGLE == 1) {
-		while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY); }
+	status = mira_init(&huart1, 5000);
+	while(status != HAL_OK){
 
-//	// Run test sequence for MIRA
-//	//status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-//
-//	while(status != HAL_OK){
-//
-//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-//		HAL_Delay(800);
-//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-//		HAL_Delay(200);
-//		//status = mira_test_sequence(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
-//
-//	}
+		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		HAL_Delay(800);
+		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		HAL_Delay(200);
+		status = mira_init(&huart1, 5000);
+
+	}
 
 	HAL_Delay(1000);
 	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
