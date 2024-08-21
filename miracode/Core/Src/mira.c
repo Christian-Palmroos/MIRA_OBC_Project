@@ -99,7 +99,7 @@ uint16_t CRC16 (uint8_t *nData, uint16_t wLength)
  * @param Timeout: timeout duration for UART communication in milliseconds
  * @return status: status of the UART operation
  */
-HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t command, uint8_t *rxBuffer, uint32_t Timeout){
+HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t command, uint8_t *rxBuffer, uint8_t rx_size, uint32_t Timeout){
 
 	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
 	//while (!mira_ready_for_comm);//{HAL_Delay(100);}
@@ -107,12 +107,12 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 //	mira_ready_for_comm = 0;
 
 	HAL_StatusTypeDef status;
-	uint8_t message[32];
+	uint8_t message_len = 9;
+	uint8_t message[message_len];
 	int j;
-	for (j = 0; j < 32; j++) {
+	for (j = 0; j < message_len; j++) {
 		message[j] = 0;
 	}
-	uint8_t message_len = 9;
 	uint8_t sync[2] = {0x5a, 0xce};
 	// do this (below) properly some other time
 	uint8_t length[2] = {0x00, 0x00};
@@ -120,18 +120,18 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 	uint8_t dest[1] = {0xe1};
 	uint16_t sum = 0;
 
-	message[32 - message_len + 0] = sync[0];
-	message[32 - message_len + 1] = sync[1];
-	message[32 - message_len + 2] = length[0];
-	message[32 - message_len + 3] = length[1];
-	message[32 - message_len + 4] = src[0];
-	message[32 - message_len + 5] = dest[0];
-	message[32 - message_len + 6] = command;
+	message[0] = sync[0];
+	message[1] = sync[1];
+	message[2] = length[0];
+	message[3] = length[1];
+	message[4] = src[0];
+	message[5] = dest[0];
+	message[6] = command;
 
-	sum = CRC16(message+2, 30);
+	sum = CRC16(message+2, 7);
 
-	message[32 - message_len + 7] = (sum&0xFF00)>>8;
-	message[32 - message_len + 8] = (sum&0x00FF);
+	message[7] = (sum&0xFF00)>>8;
+	message[8] = (sum&0x00FF);
 
 	//while (huart->RxState != HAL_UART_STATE_READY) {HAL_Delay(1);}
 
@@ -140,14 +140,14 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
 	// write given value to register at given address
-	status = HAL_UART_Transmit(huart, message, 10, Timeout);
+	status = HAL_UART_Transmit(huart, message, 9, Timeout);
 
 	// Enable receiver and disable transmitter
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
 	if (status != HAL_OK) {return status;}
 
-	status = HAL_UART_Receive_DMA(huart, rxBuffer, sizeof(rxBuffer));
+	status = HAL_UART_Receive_DMA(huart, rxBuffer, rx_size);
 	HAL_Delay(3);
 
 
@@ -237,12 +237,12 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
  * @param Timeout: timeout duration for UART communication in milliseconds
  * @return status: status of the UART operation
  */
-HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout){
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
 
 	// Get the science data and save it to rxBuffer
-	status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, Timeout);
+	status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, science_size, Timeout);
 	if (status != HAL_OK) {
 		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 		HAL_Delay(50);
@@ -262,12 +262,12 @@ HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_
  * @param Timeout: timeout duration for UART communication in milliseconds
  * @return status: status of the UART operation
  */
-HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint32_t Timeout){
+HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint8_t rx_size, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
 
 	// Call for housekeeping data  // 96 bytes of HK data
-	status = mira_command_empty_payload(huart, GET_HOUSEKEEPING, rxBuffer, Timeout);
+	status = mira_command_empty_payload(huart, GET_HOUSEKEEPING, rxBuffer, rx_size, Timeout);
 	if (status != HAL_OK) {return status;}
 
 	// return status

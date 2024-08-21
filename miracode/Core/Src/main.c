@@ -328,7 +328,7 @@ int main(void)
 	uint8_t mira_target_reg = 0x00;
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x00};
 	uint8_t mira_Rx_buffer[9+1];
-	uint8_t mira_science_Rx_buffer[9+144];
+	uint8_t mira_science_Rx_buffer[142];
 	uint8_t mira_response_Rx_buffer[9+1];
 
 	//	SX1278_hw_t SX1278_hw;
@@ -458,6 +458,16 @@ int main(void)
 		status = mira_init(&huart1, 5000);
 
 	}
+
+	while(1) {
+		HAL_Delay(3000);
+		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(800);
+		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+		HAL_Delay(200);
+	}
+
 
 	HAL_Delay(1000);
 	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
@@ -969,7 +979,7 @@ int main(void)
 
 			/// MIRA /////////////////////////////////////////////////////////////////////////////////
 
-			status = mira_science_data(&huart1, mira_science_Rx_buffer, mira_response_Rx_buffer, 5000);
+			status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
 			add_to_buffer(&data_buffer, &mira_science_Rx_buffer, strlen(mira_science_Rx_buffer));
 
 			//mira_read()
