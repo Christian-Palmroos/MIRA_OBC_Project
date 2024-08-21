@@ -442,31 +442,33 @@ int main(void)
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
-	// Waiting for power distribution in all systems for 2 seconds
-	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-	HAL_Delay(2000);
-	HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 
 	status = mira_init(&huart1, 5000);
-	while(status != HAL_OK){
-
+	if (status != HAL_OK) {
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(800);
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(200);
-		status = mira_init(&huart1, 5000);
-
 	}
+//	while(status != HAL_OK){
+//
+//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+//		HAL_Delay(800);
+//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+//		HAL_Delay(200);
+//		status = mira_init(&huart1, 5000);
+//
+//	}
 
-	while(1) {
-		HAL_Delay(3000);
-		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
-		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-		HAL_Delay(800);
-		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-		HAL_Delay(200);
-	}
+//	while(1) {
+//		HAL_Delay(3000);
+//		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
+//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+//		HAL_Delay(800);
+//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+//		HAL_Delay(200);
+//	}
 
 
 	HAL_Delay(1000);
@@ -662,8 +664,9 @@ int main(void)
 			while (CDC_Transmit_FS ("Mount failed!\n", 14) == USBD_BUSY);}
 
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					HAL_Delay(1000);
+					HAL_Delay(800);
 					HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+					HAL_Delay(200);
 
 		//while (CDC_Transmit_FS (, 14) == USBD_BUSY);
 		sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
@@ -884,7 +887,7 @@ int main(void)
 			system_time_counter++;
 
 			// Toggle LED on board to indicate succesful timer management
-			HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 
 
 			/// BMP  /////////////////////////////////////////////////////////////////////////////////

@@ -2,5 +2,5 @@
 ../Core/Src/mira.c:102:19:mira_command_empty_payload	88	dynamic
 ../Core/Src/mira.c:168:19:mira_command	88	dynamic
 ../Core/Src/mira.c:240:19:mira_science_data	40	static
-../Core/Src/mira.c:265:19:mira_housekeeping_data	40	static
-../Core/Src/mira.c:284:19:mira_init	192	static
+../Core/Src/mira.c:259:19:mira_housekeeping_data	40	static
+../Core/Src/mira.c:278:19:mira_init	192	static
