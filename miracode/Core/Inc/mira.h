@@ -31,6 +31,10 @@ extern const uint8_t CHECK_FOR_READ;
 extern const uint8_t MARK_AS_READ;
 extern const uint8_t POWERSAVE;
 
+// MIRA init parameters
+
+extern const uint8_t mira_write_IT[6];
+
 //MIRA communication status
 //extern volatile unsigned mira_ready_for_comm;
 

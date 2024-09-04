@@ -223,6 +223,14 @@ void add_to_buffer(uint8_t* data_buffer, uint8_t* data, int size) {
 
 }
 
+void add_to_buffer_hex(uint8_t* data_buffer, uint8_t* data, int size) {
+
+	for (int i = 0; i < size; i++) {
+		sprintf(data_buffer + strlen(data_buffer), "%02x ", data[i]);
+	}
+
+}
+
 
 
 
@@ -266,7 +274,8 @@ int main(void)
 	FRESULT sd_status;
 
 	// Buffer for all data to be stored into in the same way as it has been printed to the PC
-	uint8_t data_buffer[LORA_MAX_PACKET_SIZE]; //LORA_MAX_PACKET_SIZE
+	//uint8_t data_buffer[LORA_MAX_PACKET_SIZE]; //LORA_MAX_PACKET_SIZE
+	uint8_t data_buffer[500];
 
 	uint8_t gps_buffer[1000];
 	char *gps_buffer_ptr1 = gps_buffer;
@@ -330,6 +339,8 @@ int main(void)
 	uint8_t mira_Rx_buffer[9+1];
 	uint8_t mira_science_Rx_buffer[142];
 	uint8_t mira_response_Rx_buffer[9+1];
+	uint8_t mira_integration_time = (mira_write_IT[0]<<40)|(mira_write_IT[1]<<32)|(mira_write_IT[2]<<24)|(mira_write_IT[3]<<16)|(mira_write_IT[4]<<8)|mira_write_IT[5];
+	mira_integration_time = mira_integration_time * 10;
 
 	//	SX1278_hw_t SX1278_hw;
 	//	SX1278_t SX1278;
@@ -442,33 +453,34 @@ int main(void)
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
-
+	HAL_Delay(2000);
 
 	status = mira_init(&huart1, 5000);
-	if (status != HAL_OK) {
+	while (status != HAL_OK) {
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(800);
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(200);
+		status = mira_init(&huart1, 5000);
 	}
-//	while(status != HAL_OK){
-//
-//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-//		HAL_Delay(800);
-//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-//		HAL_Delay(200);
-//		status = mira_init(&huart1, 5000);
-//
-//	}
+	//	while(status != HAL_OK){
+	//
+	//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+	//		HAL_Delay(800);
+	//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+	//		HAL_Delay(200);
+	//		status = mira_init(&huart1, 5000);
+	//
+	//	}
 
-//	while(1) {
-//		HAL_Delay(3000);
-//		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
-//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-//		HAL_Delay(800);
-//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-//		HAL_Delay(200);
-//	}
+	//	while(1) {
+	//		HAL_Delay(3000);
+	//		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
+	//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	//		HAL_Delay(800);
+	//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	//		HAL_Delay(200);
+	//	}
 
 
 	HAL_Delay(1000);
@@ -498,9 +510,9 @@ int main(void)
 	}
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
 
 
@@ -538,9 +550,9 @@ int main(void)
 	//LSM6DSO_FIFO_Set_Mode(&gyro_device, (uint8_t)3);
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
 	/// BMP Init /////////////////////////////////////////////////////////////////////////////////
 	/* Interface reference is given as a parameter
@@ -583,9 +595,9 @@ int main(void)
 	//volatile unsigned tmp;
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
 	/// GPS Init /////////////////////////////////////////////////////////////////////////////////
 
@@ -597,9 +609,9 @@ int main(void)
 
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	/// SD Init /////////////////////////////////////////////////////////////////////////////////
 
 	// Initialize SD card
@@ -664,9 +676,9 @@ int main(void)
 			while (CDC_Transmit_FS ("Mount failed!\n", 14) == USBD_BUSY);}
 
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					HAL_Delay(800);
-					HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
-					HAL_Delay(200);
+		HAL_Delay(800);
+		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
+		HAL_Delay(200);
 
 		//while (CDC_Transmit_FS (, 14) == USBD_BUSY);
 		sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
@@ -680,9 +692,9 @@ int main(void)
 	}
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 
 	/// System timers Init /////////////////////////////////////////////////////////////////////////////////
 
@@ -693,9 +705,9 @@ int main(void)
 
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	/// I2C scanning /////////////////////////////////////////////////////////////////////////////////
 	// Comment this out once build finished
 	//-[ I2C Bus Scanning ]-
@@ -717,9 +729,9 @@ int main(void)
 	}
 
 	HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		HAL_Delay(1000);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	HAL_Delay(1000);
+	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	//while (CDC_Transmit_FS ("\n", 1) == USBD_BUSY);
 	//--[ Scanning Done ]--
 
@@ -852,6 +864,7 @@ int main(void)
 	tick = 0;
 	tickGPS = 0;
 	tickSync = 0;
+	tickMIRA = 0;
 
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
 	/// Main program /////////////////////////////////////////////////////////////////////////////////
@@ -887,7 +900,7 @@ int main(void)
 			system_time_counter++;
 
 			// Toggle LED on board to indicate succesful timer management
-			HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+			HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 
 
 			/// BMP  /////////////////////////////////////////////////////////////////////////////////
@@ -972,7 +985,7 @@ int main(void)
 				token = strtok(NULL, ",");
 				parser_i++;
 			}
-			strcat(data_buffer, "\n");
+
 
 			free(gps_buffer_copy); // Free the memory allocated for the copy
 			free(token);
@@ -982,8 +995,13 @@ int main(void)
 
 			/// MIRA /////////////////////////////////////////////////////////////////////////////////
 
-			status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
-			add_to_buffer(&data_buffer, &mira_science_Rx_buffer, strlen(mira_science_Rx_buffer));
+			if (tickMIRA == 0) {
+				tickMIRA = mira_integration_time;
+				status = mira_science_data(&huart1, mira_science_Rx_buffer, 142, 5000);
+				add_to_buffer_hex(&data_buffer, &mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer));
+				strcat(data_buffer, "\n");
+			}
+			strcat(data_buffer, "\n");
 
 			//mira_read()
 
@@ -1005,8 +1023,8 @@ int main(void)
 
 			/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
 			//write gps data to SD
-			//if (sd_status == FR_OK){
-			sd_result_write = f_write(&SDFile, data_buffer, strlen((char *)data_buffer), (void *)&sd_err_byteswritten);
+			//if (sd_status == FR_OK){(char *)
+			sd_result_write = f_write(&SDFile, data_buffer, strlen(data_buffer), (void *)&sd_err_byteswritten);
 			//}
 			// Sendgps data to LORA
 			if (lora_res == LORA_OK) {

@@ -46,6 +46,7 @@ extern volatile uint8_t gps_rxBufferPos;
 extern volatile uint8_t tick;
 extern volatile uint8_t tickGPS;
 extern volatile uint8_t tickSync;
+extern volatile uint8_t tickMIRA;
 extern volatile uint8_t step;
 extern volatile unsigned gps_data_ready;
 extern volatile unsigned gps_send_ready;

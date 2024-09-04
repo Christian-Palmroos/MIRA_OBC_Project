@@ -31,6 +31,9 @@ const uint8_t CHECK_FOR_READ = 0x80;
 const uint8_t MARK_AS_READ = 0x81;
 const uint8_t POWERSAVE = 0xC0;
 
+// MIRA init parameters
+const uint8_t mira_write_IT[6] = {0x00,0x00,0x00,0x00,0x00, 0x0F}; // 15 s
+
 //MIRA communication status
 //volatile unsigned mira_ready_for_comm = 1;
 
@@ -306,7 +309,7 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 	// Set calibration values regs 7-10, 14, 15
 	// Set integration time IT
 	uint8_t IT = 0x07;
-	uint8_t mira_write_IT[6] = {0x00,0x00,0x00,0x00,0x00, 0x0F}; // 15 s
+	// Instead of inputting the value here, the value is at the top of mira.c with the name mira_write_IT
 	status =  mira_command(huart, WRITE_REGISTER, IT, mira_write_IT, sizeof(mira_write_IT), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
