@@ -265,7 +265,6 @@ HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxB
 
 	// Call for housekeeping data  // 96 bytes of HK data
 	status = mira_command_empty_payload(huart, GET_HOUSEKEEPING, rxBuffer, rx_size, Timeout);
-	if (status != HAL_OK) {return status;}
 
 	// return status
 	return status;

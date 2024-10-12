@@ -79,6 +79,7 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -338,6 +339,7 @@ int main(void)
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x00};
 	uint8_t mira_Rx_buffer[9+1];
 	uint8_t mira_science_Rx_buffer[142];
+	uint8_t mira_housekeeping_Rx_buffer[64];
 	uint8_t mira_response_Rx_buffer[9+1];
 	uint8_t mira_integration_time = (mira_write_IT[0]<<40)|(mira_write_IT[1]<<32)|(mira_write_IT[2]<<24)|(mira_write_IT[3]<<16)|(mira_write_IT[4]<<8)|mira_write_IT[5];
 	mira_integration_time = mira_integration_time * 10;
@@ -381,6 +383,7 @@ int main(void)
 	uint8_t lora_test_packet[10] = {0,1,2,3,4,5,6,7,8,9};
 
 	int PRINT_TOGGLE = 0;
+	int uart_dump = 1;
 
 	/* USER CODE END 1 */
 
@@ -388,7 +391,6 @@ int main(void)
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
-
 
 	/* USER CODE BEGIN Init */
 
@@ -408,7 +410,7 @@ int main(void)
 	SystemClock_Config();
 
 	/* USER CODE BEGIN SysInit */
-	// Initialize SD card
+
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
@@ -416,7 +418,6 @@ int main(void)
 	MX_DMA_Init();
 	MX_I2C1_Init();
 	MX_SDMMC1_SD_Init();
-	//BSP_SD_Init();
 	MX_SPI1_Init();
 	MX_USART1_UART_Init();
 	MX_USART2_UART_Init();
@@ -427,6 +428,9 @@ int main(void)
 	/* Initialize interrupts */
 	MX_NVIC_Init();
 	/* USER CODE BEGIN 2 */
+
+	// Initialize SD card
+	BSP_SD_Init();
 
 	// Power on LED
 	HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
@@ -456,12 +460,12 @@ int main(void)
 	HAL_Delay(2000);
 
 	status = mira_init(&huart1, 5000);
-	while (status != HAL_OK) {
+	if (status != HAL_OK) {
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(800);
 		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
 		HAL_Delay(200);
-		status = mira_init(&huart1, 5000);
+		//status = mira_init(&huart1, 5000);
 	}
 	//	while(status != HAL_OK){
 	//
@@ -663,14 +667,14 @@ int main(void)
 	GPIO_PinState pinstate = HAL_GPIO_ReadPin(CARD_DETECT_GPIO_Port, CARD_DETECT_Pin);
 
 
-	while (pinstate == GPIO_PIN_RESET) {
+	if (pinstate == GPIO_PIN_RESET) {
 		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 		HAL_Delay(1000);
 		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
 	}
 
 
-	while(sd_status != FR_OK)
+	if(sd_status != FR_OK)
 	{
 		if (PRINT_TOGGLE == 1) {
 			while (CDC_Transmit_FS ("Mount failed!\n", 14) == USBD_BUSY);}
@@ -681,14 +685,16 @@ int main(void)
 		HAL_Delay(200);
 
 		//while (CDC_Transmit_FS (, 14) == USBD_BUSY);
-		sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
+		//sd_status = f_mount(&SDFatFS, (TCHAR const*)SDPath, 1);
 	}
 
-	sd_status = f_open(&SDFile, "STM32.TXT", FA_OPEN_APPEND | FA_WRITE);
-	if(sd_status != FR_OK)
-	{
-		if (PRINT_TOGGLE == 1) {
-			while (CDC_Transmit_FS ("Open file failed!\n", 18) == USBD_BUSY);}
+	if (sd_status == FR_OK) {
+		sd_status = f_open(&SDFile, "STM32.TXT", FA_OPEN_APPEND | FA_WRITE);
+		if(sd_status != FR_OK)
+		{
+			if (PRINT_TOGGLE == 1) {
+				while (CDC_Transmit_FS ("Open file failed!\n", 18) == USBD_BUSY);}
+		}
 	}
 
 	HAL_Delay(1000);
@@ -1000,6 +1006,9 @@ int main(void)
 				status = mira_science_data(&huart1, mira_science_Rx_buffer, 142, 5000);
 				add_to_buffer_hex(&data_buffer, &mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer));
 				strcat(data_buffer, "\n");
+				//				status = mira_housekeeping_data(&huart1, mira_housekeeping_Rx_buffer, 64, 5000);
+				//				add_to_buffer_hex(&data_buffer, &mira_housekeeping_Rx_buffer, sizeof(mira_housekeeping_Rx_buffer));
+				//				strcat(data_buffer, "\n");
 			}
 			strcat(data_buffer, "\n");
 
@@ -1024,7 +1033,13 @@ int main(void)
 			/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
 			//write gps data to SD
 			//if (sd_status == FR_OK){(char *)
-			sd_result_write = f_write(&SDFile, data_buffer, strlen(data_buffer), (void *)&sd_err_byteswritten);
+			if (sd_status == FR_OK) {
+				sd_result_write = f_write(&SDFile, data_buffer, strlen(data_buffer), (void *)&sd_err_byteswritten);
+			}
+
+			if (uart_dump == 1) {
+				HAL_UART_Transmit_DMA(&huart2, &data_buffer, strlen(data_buffer));
+			}
 			//}
 			// Sendgps data to LORA
 			if (lora_res == LORA_OK) {
@@ -1211,7 +1226,7 @@ static void MX_SDMMC1_SD_Init(void)
 	hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
 	hsd1.Init.BusWide = SDMMC_BUS_WIDE_4B;
 	hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-	hsd1.Init.ClockDiv = 0;
+	hsd1.Init.ClockDiv = 20;
 	hsd1.Init.Transceiver = SDMMC_TRANSCEIVER_DISABLE;
 	/* USER CODE BEGIN SDMMC1_Init 2 */
 
@@ -1426,6 +1441,11 @@ static void MX_DMA_Init(void)
 	/* DMA controller clock enable */
 	__HAL_RCC_DMAMUX1_CLK_ENABLE();
 	__HAL_RCC_DMA1_CLK_ENABLE();
+
+	/* DMA interrupt init */
+	/* DMA1_Channel3_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 

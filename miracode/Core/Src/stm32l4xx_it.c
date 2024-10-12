@@ -79,6 +79,7 @@ extern SD_HandleTypeDef hsd1;
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
@@ -253,6 +254,20 @@ void DMA1_Channel2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 channel3 global interrupt.
+  */
+void DMA1_Channel3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_tx);
+  /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel3_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM1 trigger and commutation interrupts and TIM17 global interrupt.
   */
 void TIM1_TRG_COM_TIM17_IRQHandler(void)
@@ -303,7 +318,7 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-
+ if (huart2.Instance->ISR & 0x20){
 	char c = huart2.Instance->RDR;
 	if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
 	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
@@ -319,6 +334,7 @@ void USART2_IRQHandler(void)
 		else {gps_rxBuffer = gps_rxBuffer1;}
 		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
 	}
+ }
 
 	//HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	//rchar = huart2.Instance->RDR;

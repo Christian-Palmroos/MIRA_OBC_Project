@@ -3,4 +3,4 @@
 ../Core/Src/mira.c:171:19:mira_command	88	dynamic
 ../Core/Src/mira.c:243:19:mira_science_data	40	static
 ../Core/Src/mira.c:262:19:mira_housekeeping_data	40	static
-../Core/Src/mira.c:281:19:mira_init	184	static
+../Core/Src/mira.c:280:19:mira_init	184	static

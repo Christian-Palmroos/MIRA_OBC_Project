@@ -2,5 +2,5 @@ mira.c:47:10:CRC16	2
 mira.c:105:19:mira_command_empty_payload	3
 mira.c:171:19:mira_command	4
 mira.c:243:19:mira_science_data	1
-mira.c:262:19:mira_housekeeping_data	2
-mira.c:281:19:mira_init	13
+mira.c:262:19:mira_housekeeping_data	1
+mira.c:280:19:mira_init	13
