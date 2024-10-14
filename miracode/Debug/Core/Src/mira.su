@@ -1,6 +1,8 @@
 ../Core/Src/mira.c:47:10:CRC16	24	static
 ../Core/Src/mira.c:105:19:mira_command_empty_payload	88	dynamic
-../Core/Src/mira.c:171:19:mira_command	88	dynamic
-../Core/Src/mira.c:243:19:mira_science_data	40	static
-../Core/Src/mira.c:262:19:mira_housekeeping_data	40	static
-../Core/Src/mira.c:280:19:mira_init	184	static
+../Core/Src/mira.c:161:19:mira_command_empty_payload_with_reg	88	dynamic
+../Core/Src/mira.c:228:19:mira_command	88	dynamic
+../Core/Src/mira.c:300:19:mira_science_data	40	static
+../Core/Src/mira.c:320:19:mira_science_data_with_check	40	static
+../Core/Src/mira.c:348:19:mira_housekeeping_data	40	static
+../Core/Src/mira.c:366:19:mira_init	104	static

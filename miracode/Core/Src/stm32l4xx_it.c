@@ -318,23 +318,23 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
- if (huart2.Instance->ISR & 0x20){
-	char c = huart2.Instance->RDR;
-	if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
-	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
-
-	if ((c == '\n') && (gps_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
-	{
-		//tickGPS = 1;
-		gps_rxBuffer[gps_rxBufferPos] = 0;
-		gps_data_ready |= 1;
-		gps_send_ready ^= 1;
-		gps_rxBufferPos = 0;
-		if (gps_rxBuffer == gps_rxBuffer1) {gps_rxBuffer = gps_rxBuffer2;}
-		else {gps_rxBuffer = gps_rxBuffer1;}
-		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
-	}
- }
+// if (huart2.Instance->ISR & 0x20){
+//	char c = huart2.Instance->RDR;
+//	if (gps_rxBufferPos < gps_RXBUFSIZE - 1)
+//	{ gps_rxBuffer[gps_rxBufferPos++] = (uint8_t) c; }
+//
+//	if ((c == '\n') && (gps_send_ready))// && (tickGPS == 0))// && (tickGPS == 0)) //(c == '\r') ||
+//	{
+//		//tickGPS = 1;
+//		gps_rxBuffer[gps_rxBufferPos] = 0;
+//		gps_data_ready |= 1;
+//		gps_send_ready ^= 1;
+//		gps_rxBufferPos = 0;
+//		if (gps_rxBuffer == gps_rxBuffer1) {gps_rxBuffer = gps_rxBuffer2;}
+//		else {gps_rxBuffer = gps_rxBuffer1;}
+//		//HAL_GPIO_TogglePin (LED1_GPIO_Port, LED1_Pin);
+//	}
+// }
 
 	//HAL_GPIO_TogglePin (LED0_GPIO_Port, LED0_Pin);
 	//rchar = huart2.Instance->RDR;

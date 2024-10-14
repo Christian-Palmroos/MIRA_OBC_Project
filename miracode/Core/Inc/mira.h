@@ -34,11 +34,13 @@ extern const uint8_t POWERSAVE;
 // MIRA init parameters
 
 extern const uint8_t mira_write_IT[6];
+extern volatile uint8_t write_bool;
 
 //MIRA communication status
 //extern volatile unsigned mira_ready_for_comm;
 
-HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint32_t Timeout);
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint8_t *specRxBuffer, uint8_t *rxBuffer, uint8_t write_bool, uint32_t Timeout);
+HAL_StatusTypeDef mira_science_data_with_check(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint8_t *specRxBuffer, uint8_t *rxBuffer, uint8_t write_bool, uint32_t Timeout);
 HAL_StatusTypeDef mira_housekeeping_data(UART_HandleTypeDef *huart, uint8_t *rxBuffer, uint16_t rxSize, uint32_t Timeout);
 HAL_StatusTypeDef mira_test_sequence(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t *response_Rx, uint32_t Timeout);
 HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout);

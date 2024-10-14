@@ -338,11 +338,13 @@ int main(void)
 	uint8_t mira_target_reg = 0x00;
 	uint8_t mira_Tx_payload[4] = {0x00,0x00,0x00,0x00};
 	uint8_t mira_Rx_buffer[9+1];
+	uint8_t mira_Rx_spec_available[13];
 	uint8_t mira_science_Rx_buffer[142];
-	uint8_t mira_housekeeping_Rx_buffer[64];
+	uint8_t mira_housekeeping_Rx_buffer[19];
 	uint8_t mira_response_Rx_buffer[9+1];
-	uint8_t mira_integration_time = (mira_write_IT[0]<<40)|(mira_write_IT[1]<<32)|(mira_write_IT[2]<<24)|(mira_write_IT[3]<<16)|(mira_write_IT[4]<<8)|mira_write_IT[5];
+	uint8_t mira_integration_time = 15;//(mira_write_IT[0]<<24)|(mira_write_IT[3]<<16)|(mira_write_IT[2]<<8)|mira_write_IT[3];
 	mira_integration_time = mira_integration_time * 10;
+	int MIRA_HK_check = 0;
 
 	//	SX1278_hw_t SX1278_hw;
 	//	SX1278_t SX1278;
@@ -381,6 +383,9 @@ int main(void)
 	static uint8_t USB_FLIGHTMODE = 0x09;
 
 	uint8_t lora_test_packet[10] = {0,1,2,3,4,5,6,7,8,9};
+
+
+	uint8_t uart_receive_dump[1000];
 
 	int PRINT_TOGGLE = 0;
 	int uart_dump = 1;
@@ -440,6 +445,9 @@ int main(void)
 	if (PRINT_TOGGLE == 1) {
 		while (CDC_Transmit_FS ("START\n", 6) == USBD_BUSY); }
 
+	// dump uart line contents to start clean
+	HAL_UART_Receive(&huart1, uart_receive_dump, sizeof(uart_receive_dump), 1000);
+
 
 	/// MIRA Init /////////////////////////////////////////////////////////////////////////////////
 
@@ -457,7 +465,7 @@ int main(void)
 	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
 
-	HAL_Delay(2000);
+	HAL_Delay(8000);
 
 	status = mira_init(&huart1, 5000);
 	if (status != HAL_OK) {
@@ -467,6 +475,10 @@ int main(void)
 		HAL_Delay(200);
 		//status = mira_init(&huart1, 5000);
 	}
+
+
+
+
 	//	while(status != HAL_OK){
 	//
 	//		HAL_GPIO_TogglePin (LED3_GPIO_Port, LED3_Pin);
@@ -477,14 +489,15 @@ int main(void)
 	//
 	//	}
 
-	//	while(1) {
-	//		HAL_Delay(3000);
-	//		status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
-	//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-	//		HAL_Delay(800);
-	//		HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
-	//		HAL_Delay(200);
-	//	}
+	//		while(1) {
+	//			HAL_Delay(2000);
+	//			//status = mira_science_data(&huart1, mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer), 5000);
+	//			status = mira_housekeeping_data(&huart1, mira_housekeeping_Rx_buffer, 19, 5000);
+	//			HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	//			HAL_Delay(800);
+	//			HAL_GPIO_TogglePin (LED2_GPIO_Port, LED2_Pin);
+	//			HAL_Delay(200);
+	//		}
 
 
 	HAL_Delay(1000);
@@ -606,10 +619,10 @@ int main(void)
 	/// GPS Init /////////////////////////////////////////////////////////////////////////////////
 
 	// Setting the buffer for UART2 data reading
-	gps_rxBuffer = gps_rxBuffer1;
-	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
-	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
-	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
+//	gps_rxBuffer = gps_rxBuffer1;
+//	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_UE);
+//	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
+//	ATOMIC_SET_BIT(huart2.Instance->CR1, USART_CR1_RXNEIE_RXFNEIE);
 
 
 	HAL_Delay(1000);
@@ -1000,34 +1013,25 @@ int main(void)
 
 
 			/// MIRA /////////////////////////////////////////////////////////////////////////////////
-
+			strcat(data_buffer, "\n");
+			if (tickMIRA < 20 & MIRA_HK_check == 1) {
+				MIRA_HK_check = 0;
+				status = mira_housekeeping_data(&huart1, mira_housekeeping_Rx_buffer, sizeof(mira_housekeeping_Rx_buffer), 5000);
+				add_to_buffer_hex(&data_buffer, &mira_housekeeping_Rx_buffer, sizeof(mira_housekeeping_Rx_buffer));
+				strcat(data_buffer, "\n");
+			}
 			if (tickMIRA == 0) {
 				tickMIRA = mira_integration_time;
-				status = mira_science_data(&huart1, mira_science_Rx_buffer, 142, 5000);
+				status = mira_science_data(&huart1, mira_science_Rx_buffer, 142, mira_Rx_spec_available, mira_Rx_buffer, write_bool, 5000);
+//				if (write_bool == 0x01){
 				add_to_buffer_hex(&data_buffer, &mira_science_Rx_buffer, sizeof(mira_science_Rx_buffer));
 				strcat(data_buffer, "\n");
-				//				status = mira_housekeeping_data(&huart1, mira_housekeeping_Rx_buffer, 64, 5000);
-				//				add_to_buffer_hex(&data_buffer, &mira_housekeeping_Rx_buffer, sizeof(mira_housekeeping_Rx_buffer));
-				//				strcat(data_buffer, "\n");
+//				write_bool = 0x00;
+//				}
+				MIRA_HK_check = 1;
 			}
 			strcat(data_buffer, "\n");
 
-			//mira_read()
-
-			// Print mira measurements
-			//		while (CDC_Transmit_FS ("MIRA START\n", 11) == USBD_BUSY);
-			//		while (CDC_Transmit_FS (mira_buffer, strlen(mira_buffer)) == USBD_BUSY);
-			//		while (CDC_Transmit_FS ("GYRO END\n\n", 10) == USBD_BUSY);
-			//
-			//		// Write mira to SD
-			//		if (sd_status == FR_OK){
-			//			sd_result_write = f_write(&SDFile, sd_write_buffer, strlen((char *)sd_write_buffer), (void *)&sd_err_byteswritten);
-			//		}
-			//
-			//		// Send mira data to LORA
-			//		if (lora_res == LORA_OK) {
-			//			lora_send_packet(&lora, (uint8_t *)"test", 4);
-			//		}
 
 
 			/// DATA RECORDING /////////////////////////////////////////////////////////////////////////////////
@@ -1038,7 +1042,7 @@ int main(void)
 			}
 
 			if (uart_dump == 1) {
-				HAL_UART_Transmit_DMA(&huart2, &data_buffer, strlen(data_buffer));
+				HAL_UART_Transmit_IT(&huart2, &data_buffer, strlen(data_buffer));
 			}
 			//}
 			// Sendgps data to LORA
@@ -1056,23 +1060,23 @@ int main(void)
 
 		/// GPS /////////////////////////////////////////////////////////////////////////////////
 		// Read GPS data whenever UART interrupt raises gps_data_ready flag
-		if (gps_data_ready) {
-			// Choose the buffer from the two data buffers that is not currently being written into and print it
-			if (gps_rxBuffer == gps_rxBuffer1) {
-				//while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
-				add_to_buffer(&gps_buffer, &gps_rxBuffer2, strlen(gps_rxBuffer2));
-
-			}
-			else {
-				//while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
-				add_to_buffer(&gps_buffer, &gps_rxBuffer1, strlen(gps_rxBuffer1));
-			}
-
-			// Toggle flags to allow for buffer swapping and next data batch sending
-			gps_data_ready ^= 1;
-			gps_send_ready |= 1;
-
-		}
+//		if (gps_data_ready) {
+//			// Choose the buffer from the two data buffers that is not currently being written into and print it
+//			if (gps_rxBuffer == gps_rxBuffer1) {
+//				//while (CDC_Transmit_FS (gps_rxBuffer2, strlen(gps_rxBuffer2)) == USBD_BUSY);
+//				add_to_buffer(&gps_buffer, &gps_rxBuffer2, strlen(gps_rxBuffer2));
+//
+//			}
+//			else {
+//				//while (CDC_Transmit_FS (gps_rxBuffer1, strlen(gps_rxBuffer1)) == USBD_BUSY);
+//				add_to_buffer(&gps_buffer, &gps_rxBuffer1, strlen(gps_rxBuffer1));
+//			}
+//
+//			// Toggle flags to allow for buffer swapping and next data batch sending
+//			gps_data_ready ^= 1;
+//			gps_send_ready |= 1;
+//
+//		}
 
 
 		/* USER CODE END WHILE */
@@ -1226,7 +1230,7 @@ static void MX_SDMMC1_SD_Init(void)
 	hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
 	hsd1.Init.BusWide = SDMMC_BUS_WIDE_4B;
 	hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-	hsd1.Init.ClockDiv = 20;
+	hsd1.Init.ClockDiv = 0;
 	hsd1.Init.Transceiver = SDMMC_TRANSCEIVER_DISABLE;
 	/* USER CODE BEGIN SDMMC1_Init 2 */
 

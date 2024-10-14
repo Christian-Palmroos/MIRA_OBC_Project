@@ -28,12 +28,12 @@ const uint8_t CALIBRATION_PACKET = 0x82;
 
 // MIRA configurations
 const uint8_t CHECK_FOR_READ = 0x80;
-const uint8_t MARK_AS_READ = 0x81;
+const uint8_t MARK_AS_READ[1] = {0x81};
 const uint8_t POWERSAVE = 0xC0;
 
 // MIRA init parameters
-const uint8_t mira_write_IT[6] = {0x00,0x00,0x00,0x00,0x00, 0x0F}; // 15 s
-
+const uint8_t mira_write_IT[4] = {0x00,0x00,0x00, 0x0F}; // 15 s
+volatile uint8_t write_bool = 0x00;
 //MIRA communication status
 //volatile unsigned mira_ready_for_comm = 1;
 
@@ -158,6 +158,63 @@ HAL_StatusTypeDef mira_command_empty_payload(UART_HandleTypeDef *huart, uint8_t 
 
 }
 
+HAL_StatusTypeDef mira_command_empty_payload_with_reg(UART_HandleTypeDef *huart, uint8_t command, uint8_t reg, uint8_t *rxBuffer, uint8_t rx_size, uint32_t Timeout){
+
+	//Wait that previous instance of communication is done (toggled by HAL_UART_RxCpltCallback)
+	//while (!mira_ready_for_comm);//{HAL_Delay(100);}
+//	HAL_Delay(500);
+//	mira_ready_for_comm = 0;
+
+	HAL_StatusTypeDef status;
+	uint8_t message_len = 9;
+	uint8_t message[message_len];
+	int j;
+	for (j = 0; j < message_len; j++) {
+		message[j] = 0;
+	}
+	uint8_t sync[2] = {0x5a, 0xce};
+	// do this (below) properly some other time
+	uint8_t length[2] = {0x00, 0x00};
+	uint8_t src[1] = {0xc1};
+	uint8_t dest[1] = {0xe1};
+	uint16_t sum = 0;
+
+	message[0] = sync[0];
+	message[1] = sync[1];
+	message[2] = length[0];
+	message[3] = length[1];
+	message[4] = src[0];
+	message[5] = dest[0];
+	message[6] = command;
+	message[7] = reg;
+
+	sum = CRC16(message+2, 8);
+
+	message[8] = (sum&0xFF00)>>8;
+	message[9] = (sum&0x00FF);
+
+	//while (huart->RxState != HAL_UART_STATE_READY) {HAL_Delay(1);}
+
+	// Enable transmitter and disable receiver
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_SET);
+
+	// write given value to register at given address
+	status = HAL_UART_Transmit(huart, message, 10, Timeout);
+
+	// Enable receiver and disable transmitter
+	HAL_GPIO_WritePin(RX_EN_2_GPIO_Port, RX_EN_2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(TX_EN_2_GPIO_Port, TX_EN_2_Pin, GPIO_PIN_RESET);
+	if (status != HAL_OK) {return status;}
+
+	status = HAL_UART_Receive_DMA(huart, rxBuffer, rx_size);
+	HAL_Delay(3);
+
+
+	return status;
+
+}
+
 /*
  * Sends a command to MIRA over UART and receives a response.
  * @param *huart: pointer to the UART handle structure
@@ -240,12 +297,41 @@ HAL_StatusTypeDef mira_command(UART_HandleTypeDef *huart, uint8_t command, uint8
  * @param Timeout: timeout duration for UART communication in milliseconds
  * @return status: status of the UART operation
  */
-HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint32_t Timeout){
+HAL_StatusTypeDef mira_science_data(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint8_t *specRxBuffer, uint8_t *rxBuffer, uint8_t write_bool, uint32_t Timeout){
 
 	HAL_StatusTypeDef status;
 
-	// Get the science data and save it to rxBuffer
-	status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, science_size, Timeout);
+	//status = mira_command_empty_payload_with_reg(huart, READ_REGISTER, 0x05, specRxBuffer, (uint8_t)sizeof(specRxBuffer), Timeout);
+	//if (status != HAL_OK) {return status;}
+	//if (specRxBuffer[10] == 0x01) {
+		 //Get the science data and save it to science_Rx
+		status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, science_size, Timeout);
+		//write_bool = 0x01;
+	//}
+
+
+//	// Mark data as read
+//	status = mira_command(huart, WRITE_REGISTER, CHECK_FOR_READ, MARK_AS_READ, sizeof(MARK_AS_READ), rxBuffer, Timeout);
+
+	// return status
+	return status;
+}
+
+HAL_StatusTypeDef mira_science_data_with_check(UART_HandleTypeDef *huart, uint8_t *science_Rx, uint8_t science_size, uint8_t *specRxBuffer, uint8_t *rxBuffer, uint8_t write_bool, uint32_t Timeout){
+
+	HAL_StatusTypeDef status;
+
+	status = mira_command_empty_payload_with_reg(huart, READ_REGISTER, 0x05, specRxBuffer, 13, Timeout);
+	if (status != HAL_OK) {return status;}
+	if (specRxBuffer[10] == 0x01) {
+		 //Get the science data and save it to science_Rx
+		status = mira_command_empty_payload(huart, GET_SCIENCE_DATA, science_Rx, science_size, Timeout);
+		write_bool = 0x01;
+	}
+
+
+//	// Mark data as read
+//	status = mira_command(huart, WRITE_REGISTER, CHECK_FOR_READ, MARK_AS_READ, sizeof(MARK_AS_READ), rxBuffer, Timeout);
 
 	// return status
 	return status;
@@ -285,13 +371,15 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	// Set AD address
 	uint8_t AD_addr = 0x03;
-	uint8_t mira_write_AD_addr[3] = {0x00,0x00,0x02}; // set value 2
+	uint8_t mira_write_AD_addr[4] = {0x00,0x00,0x00,0x02}; // set value 2
 	status =  mira_command(huart, WRITE_REGISTER, AD_addr, mira_write_AD_addr, sizeof(mira_write_AD_addr), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
+	HAL_Delay(10);
+
 	// Enable AD converter
 	uint8_t AD_en = 0x02;
-	uint8_t mira_write_AD_en[1] = {0x01};
+	uint8_t mira_write_AD_en[4] = {0x00,0x00,0x00,0x01};
 	status =  mira_command(huart, WRITE_REGISTER, AD_en, mira_write_AD_en, sizeof(mira_write_AD_en), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
@@ -299,7 +387,7 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 
 	// Enable high voltage
 	uint8_t HV_enable = 0x14;
-	uint8_t mira_write_HV_enable[1] = {0x01};
+	uint8_t mira_write_HV_enable[4] = {0x00,0x00,0x00,0x01};
 	status =  mira_command(huart, WRITE_REGISTER, HV_enable, mira_write_HV_enable, sizeof(mira_write_HV_enable), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
@@ -311,57 +399,57 @@ HAL_StatusTypeDef mira_init(UART_HandleTypeDef *huart, uint32_t Timeout){
 	// Instead of inputting the value here, the value is at the top of mira.c with the name mira_write_IT
 	status =  mira_command(huart, WRITE_REGISTER, IT, mira_write_IT, sizeof(mira_write_IT), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set main trigger level
 	uint8_t Trigger = 0x0B;
-	uint8_t mira_write_Trigger[16] = {0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00, 0x28}; // set value 40
+	uint8_t mira_write_Trigger[4] = {0x00,0x00,0x00, 0x0A}; // set value 10
 	status =  mira_command(huart, WRITE_REGISTER, Trigger, mira_write_Trigger, sizeof(mira_write_Trigger), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set fast noise level
 	uint8_t Fast_noise = 0x08;
-	uint8_t mira_write_Fast_noise[13] = {0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x0C}; // set value 12
+	uint8_t mira_write_Fast_noise[4] = {0x00, 0x00,0x00,0x0C}; // set value 12
 	status =  mira_command(huart, WRITE_REGISTER, Fast_noise, mira_write_Fast_noise, sizeof(mira_write_Fast_noise), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set fast trigger level
 	uint8_t Fast_trigger = 0x09;
-	uint8_t mira_write_Fast_trigger[13] = {0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x14}; // set value 20
+	uint8_t mira_write_Fast_trigger[4] = {0x00, 0x00,0x00,0x0A}; // set value 10
 	status =  mira_command(huart, WRITE_REGISTER, Fast_trigger, mira_write_Fast_trigger, sizeof(mira_write_Fast_trigger), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set filter settings to 0
 	uint8_t Filter_settings = 0x0A;
 	uint8_t mira_write_Filter_settings[4] = {0x00,0x00,0x00,0x00};
 	status =  mira_command(huart, WRITE_REGISTER, Filter_settings, mira_write_Filter_settings, sizeof(mira_write_Filter_settings), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set fast calibration multiplier
 	uint8_t Calib_m = 0x0E;
-	uint8_t mira_write_Calib_m[16] = {0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x27, 0x10}; // set value 10000
+	uint8_t mira_write_Calib_m[4] = {0x00,0x00,0x47, 0x10}; // set value XXXXXX
 	status =  mira_command(huart, WRITE_REGISTER, Calib_m, mira_write_Calib_m, sizeof(mira_write_Calib_m), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Set time in unix time (s)
 	uint8_t Time = 0x0F;
-	uint8_t mira_write_Time[32];
+	uint8_t mira_write_Time[4];
 	int i;
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 4; i++) {
 		mira_write_Time[i] = 0;
 	}
 	status =  mira_command(huart, WRITE_REGISTER, Time, mira_write_Time, sizeof(mira_write_Time), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
-
+	HAL_Delay(10);
 
 	// Go to science mode
 	uint8_t Science_mode = 0x06;
-	uint8_t mira_write_Science_mode[1] = {0x01};
+	uint8_t mira_write_Science_mode[4] = {0x00,0x00,0x00,0x01};
 	status =  mira_command(huart, WRITE_REGISTER, Science_mode, mira_write_Science_mode, sizeof(mira_write_Science_mode), mira_Rx_buffer, Timeout);
 	if (status != HAL_OK) {return status;}
 
